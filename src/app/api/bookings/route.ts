@@ -192,7 +192,8 @@ export async function POST(request: Request) {
       totalPrice: Number(peopleCount) * 440 * Number(durationHours),
       status: bookingStatus,
       cancelToken: crypto.randomUUID(),
-      baseUrl: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001'
+      baseUrl: process.env.NEXT_PUBLIC_BASE_URL || 'https://zeroemission-reserve.netlify.app',
+      gasUrl: process.env.NEXT_PUBLIC_GAS_API_URL || ''
     };
 
     await createBookingInSheet(bookingPayload);
