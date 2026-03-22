@@ -215,13 +215,28 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                   
                   const targetStudioStr = activeStudio === 'Studio A' ? 'Studio A' : 'Studio B';
                   
+                  // 当日15分前制御（お客様のみ、管理者は除外）
+                  let isPastOrTooSoon = false;
+                  if (!isAdmin) {
+                    const now = new Date();
+                    const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+                    if (dateStr === todayStr) {
+                      const [slotH, slotM] = time.split(':').map(Number);
+                      const slotMins = slotH * 60 + slotM;
+                      const nowMins = now.getHours() * 60 + now.getMinutes() + 15; // 15分前制御
+                      if (slotMins <= nowMins) isPastOrTooSoon = true;
+                    } else if (dateStr < `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`) {
+                      isPastOrTooSoon = true;
+                    }
+                  }
+
                   // This cell is occupied by an existing booking
                   const bookingObj = getBookingForSlot(targetStudioStr, dateStr, time);
                   const isOccupied = !!bookingObj && bookingObj.status === 'ACTIVE';
                   const isCanceledHistory = !!bookingObj && bookingObj.status?.startsWith('CANCELED');
                   
-                  const canStart = !isOccupied && canBook1HourFrom(targetStudioStr, dateStr, idx);
-                  const isInteractive = !isOccupied && canStart;
+                  const canStart = !isOccupied && !isPastOrTooSoon && canBook1HourFrom(targetStudioStr, dateStr, idx);
+                  const isInteractive = !isOccupied && !isPastOrTooSoon && canStart;
 
                   const isHighlighted = isInteractive && isCellHovered(colIdx, idx);
                   const isHoveredFromAbove = idx > 0 && isCellHovered(colIdx, idx) && canBook1HourFrom(targetStudioStr, dateStr, idx - 1);
