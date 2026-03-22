@@ -1,8 +1,9 @@
 'use client';
+import { Suspense } from 'react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-export default function CancelPage() {
+function CancelContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
   const [status, setStatus] = useState<'loading' | 'redirecting' | 'processing' | 'done' | 'error'>('loading');
@@ -15,7 +16,7 @@ export default function CancelPage() {
       return;
     }
 
-    // GASのWebアプリURLを取得してリダイレクト
+    // GASのWebアプリURLにリダイレクト
     const gasUrl = process.env.NEXT_PUBLIC_GAS_API_URL;
     if (gasUrl) {
       setStatus('redirecting');
@@ -23,27 +24,9 @@ export default function CancelPage() {
       return;
     }
 
-    // gasUrlが取得できない場合はAPI経由でキャンセル処理
-    setStatus('processing');
-    fetch('/api/bookings/cancel', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token })
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setStatus('done');
-          setMessage('ご予約のキャンセル手続きが完了しました。またのご利用を心よりお待ちしております。');
-        } else {
-          setStatus('error');
-          setMessage(data.error || 'キャンセル処理に失敗しました。');
-        }
-      })
-      .catch(() => {
-        setStatus('error');
-        setMessage('ネットワークエラーが発生しました。');
-      });
+    // gasUrlが取得できない場合はエラー表示
+    setStatus('error');
+    setMessage('キャンセル処理の設定が不完全です。お手数ですが店舗までお問い合わせください。');
   }, [token]);
 
   return (
@@ -92,5 +75,17 @@ export default function CancelPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function CancelPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: '#888' }}>読み込み中...</p>
+      </div>
+    }>
+      <CancelContent />
+    </Suspense>
   );
 }
