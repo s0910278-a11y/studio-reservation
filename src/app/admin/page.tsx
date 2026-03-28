@@ -8,7 +8,46 @@ import { getBookingsFromSheet, getUsersFromSheet } from '../../lib/sheets';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
-  const allBookings = await getBookingsFromSheet();
+  let allBookings: any[] = [];
+  let users: any[] = [];
+  let fetchError = false;
+
+  try {
+    // 順番（直列）に取得するとGASの遅延によってNetlifyサーバレス関数の10秒制限（タイムアウト）に引っかかるため、
+    // Promise.allで並列にリクエストを投げて合計待ち時間を半分に短縮します。
+    const [bRes, uRes] = await Promise.all([
+      getBookingsFromSheet(),
+      getUsersFromSheet()
+    ]);
+    allBookings = bRes || [];
+    
+    // 【BAN表示】利用停止中 または キャンセル過多（3回以上）の顧客を表示
+    users = (uRes || []).filter((u: any) => {
+      const stopKey = Object.keys(u).find(k => k.includes('利用停止'));
+      const isStopped = !!(stopKey && String(u[stopKey]).toLowerCase() === 'true');
+      const cancelCount = Number(u['キャンセル回数']) || 0;
+      return isStopped || cancelCount >= 3;
+    });
+  } catch (error) {
+    console.error('Admin API fetch error:', error);
+    fetchError = true;
+  }
+
+  if (fetchError) {
+    return (
+      <div style={{ maxWidth: '800px', margin: '100px auto', textAlign: 'center', padding: '40px', backgroundColor: '#1e1e1e', borderRadius: '8px', border: '1px solid #333' }}>
+        <h2 style={{ color: '#e53935', fontSize: '1.5rem', marginBottom: '20px' }}>通信エラー（タイムアウト等）</h2>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '30px', lineHeight: '1.6' }}>
+          データベース（スプレッドシート）からの応答時間が制限を超過したか、一時的な通信エラーが発生しました。<br />
+          5秒ほど待ってから、再度読み込みをお試しください。
+        </p>
+        <a href="/admin" style={{ display: 'inline-block', backgroundColor: '#333', color: 'white', padding: '12px 30px', textDecoration: 'none', borderRadius: '6px', fontWeight: 'bold', border: '1px solid #555' }}>
+          再読み込みする
+        </a>
+      </div>
+    );
+  }
+
   const now = new Date();
   
   // 当日の日付文字列 (YYYY-MM-DD)
@@ -47,14 +86,6 @@ export default async function AdminDashboard() {
       return (b['開始時間'] || '').localeCompare(a['開始時間'] || '');
     })
     .slice(0, 200);
-
-  // 【BAN表示】利用停止中 または キャンセル過多（3回以上）の顧客を表示
-  const users = (await getUsersFromSheet()).filter((u: any) => {
-    const stopKey = Object.keys(u).find(k => k.includes('利用停止'));
-    const isStopped = !!(stopKey && String(u[stopKey]).toLowerCase() === 'true');
-    const cancelCount = Number(u['キャンセル回数']) || 0;
-    return isStopped || cancelCount >= 3;
-  });
 
   // テーブル行レンダー用の共通関数
   const renderBookingRow = (b: any, i: number) => {
