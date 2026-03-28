@@ -207,12 +207,12 @@ export async function POST(request: Request) {
       status: bookingStatus,
       cancelToken: crypto.randomUUID(),
       baseUrl: process.env.NEXT_PUBLIC_BASE_URL || 'https://zeroemission-reserve.netlify.app',
-      gasUrl: process.env.NEXT_PUBLIC_GAS_API_URL || ''
+      gasUrl: "https://script.google.com/macros/s/AKfycbxOE4x6w2NNbbrXJ_NSqf2CaTT5LaWvKflPzQnB-jkOuh9mg2IwA9nPcky6fPqcM3Tz4w/exec" || ''
     };
 
     // I列「予約拒否」などの BAN 候補者の場合：枠を確保せずお断りメールのみ
     if (isBanCandidate) {
-      const gasUrl = process.env.NEXT_PUBLIC_GAS_API_URL || '';
+      const gasUrl = "https://script.google.com/macros/s/AKfycbxOE4x6w2NNbbrXJ_NSqf2CaTT5LaWvKflPzQnB-jkOuh9mg2IwA9nPcky6fPqcM3Tz4w/exec" || '';
       try {
         await fetch(gasUrl, {
           method: 'POST',
@@ -269,7 +269,7 @@ export async function PUT(request: Request) {
     const data = await request.json();
     const { action, bookingId, status } = data;
     if (action === 'updateStatus' && bookingId && status) {
-       const gasUrl = process.env.NEXT_PUBLIC_GAS_API_URL || '';
+       const gasUrl = "https://script.google.com/macros/s/AKfycbxOE4x6w2NNbbrXJ_NSqf2CaTT5LaWvKflPzQnB-jkOuh9mg2IwA9nPcky6fPqcM3Tz4w/exec" || '';
 
        if (status === 'ACTIVE') {
          // 復元時の重複チェック

@@ -17,7 +17,7 @@ function CancelContent() {
     }
 
     // GASのWebアプリURLにリダイレクト
-    const gasUrl = process.env.NEXT_PUBLIC_GAS_API_URL;
+    const gasUrl = "https://script.google.com/macros/s/AKfycbxOE4x6w2NNbbrXJ_NSqf2CaTT5LaWvKflPzQnB-jkOuh9mg2IwA9nPcky6fPqcM3Tz4w/exec";
     if (gasUrl) {
       setStatus('redirecting');
       window.location.href = `${gasUrl}?token=${token}`;
