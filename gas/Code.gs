@@ -12,6 +12,8 @@ function getSheet(sheetName) {
       sheet.appendRow(["予約ID", "会員ナンバー", "お名前", "スタジオ", "日付", "開始時間", "終了時間", "利用人数", "合計金額", "ステータス", "キャンセル用トークン", "登録日時"]);
     } else if (sheetName === '顧客リスト') {
       sheet.appendRow(["会員ナンバー", "お名前", "メールアドレス", "電話番号", "利用停止フラグ", "キャンセル回数", "登録日時"]);
+    } else if (sheetName === '機材リスト') {
+      sheet.appendRow(["スタジオ", "カテゴリー", "名称", "サブカテゴリー"]);
     }
   }
   return sheet;
@@ -30,6 +32,12 @@ function doGet(e) {
     
     if (action === 'getUsers') {
       const sheet = getSheet('顧客リスト');
+      const data = getSheetDataAsJson(sheet);
+      return createJsonResponse({ success: true, data: data });
+    }
+
+    if (action === 'getEquipment') {
+      const sheet = getSheet('機材リスト');
       const data = getSheetDataAsJson(sheet);
       return createJsonResponse({ success: true, data: data });
     }

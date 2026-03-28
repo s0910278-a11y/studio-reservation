@@ -44,9 +44,10 @@ export async function POST(request: Request) {
     let finalMemberNo = memberNo;
     
     if (memberNo && memberNo !== 'ADMIN') {
+      const targetNo = String(memberNo).trim().toUpperCase();
       // Existing Member Flow
       const users = await getUsersFromSheet();
-      const existingUser = users.find((u: any) => u['会員ナンバー'] === memberNo);
+      const existingUser = users.find((u: any) => String(u['会員ナンバー']).trim().toUpperCase() === targetNo);
       
       if (!existingUser) {
         return NextResponse.json({ error: 'ご入力の会員ナンバーは登録されていません。' }, { status: 404 });
@@ -57,7 +58,10 @@ export async function POST(request: Request) {
       phone = existingUser['電話番号'];
       email = existingUser['メールアドレス'];
       
-      if (existingUser['利用停止フラグ'] === 'true' || existingUser['利用停止フラグ'] === true) {
+      const isStopped = String(existingUser['利用停止フラグ']).toLowerCase() === 'true';
+      const isRefused = String(existingUser['予約拒否']).toLowerCase() === 'true';
+      
+      if (isStopped || isRefused) {
         isBanCandidate = true;
       }
 
@@ -90,8 +94,10 @@ export async function POST(request: Request) {
           if (!matchedUser || score > matchScore) {
             matchedUser = u;
             matchScore = score;
-            // BAN検知: 名前違い(偽装)だが電話・メアドが一致してスコア2に達し、かつBAN済みの場合
-            isBanCandidate = (!pName && (u['利用停止フラグ'] === 'true' || u['利用停止フラグ'] === true));
+            // BAN検知: E列(停止) または I列(拒否) が TRUE の場合
+            const isStopped = String(u['利用停止フラグ']).toLowerCase() === 'true';
+            const isRefused = String(u['予約拒否']).toLowerCase() === 'true';
+            isBanCandidate = isStopped || isRefused;
           }
         }
       }
@@ -149,17 +155,25 @@ export async function POST(request: Request) {
     const endH = String(endDate.getHours()).padStart(2, '0');
     const endM = String(endDate.getMinutes()).padStart(2, '0');
     const endTime = `${endH}:${endM}`;
-
+    
     // Conflict check (Strict Overlap Validation)
     // Overlap condition: MAX(start1, start2) < MIN(end1, end2)
     // Or simpler: newStart < existingEnd && newEnd > existingStart
     const newStartMins = startH * 60 + startM;
     const newEndMins = newStartMins + Number(durationHours) * 60;
 
+    // 営業時間バリデーション: 11:00〜19:00
+    if (newEndMins > 1140) { // 19:00 = 1140 mins
+      return NextResponse.json({ error: '営業時間は19:00までです。終了時間がこれを超える予約はできません。' }, { status: 400 });
+    }
+    if (startH < 11) {
+      return NextResponse.json({ error: '営業時間は11:00からです。' }, { status: 400 });
+    }
+
     const bookings = await getBookingsFromSheet();
     const conflict = bookings.find((b: any) => {
       // 日付とスタジオが一致するか？
-      const isSameDate = b['日付'].substring(0, 10) === new Date(date).toISOString().substring(0, 10);
+      const isSameDate = (b['日付'] || "").substring(0, 10) === new Date(date).toISOString().substring(0, 10) || b['日付'].startsWith(new Date(date).toISOString().substring(0, 10));
       const isSameStudio = b['スタジオ'].includes(studio.includes('Studio A') ? 'Studio A' : 'Studio B');
       if (!isSameDate || !isSameStudio || b['ステータス'] !== 'ACTIVE') return false;
 
@@ -177,7 +191,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `指定された時間帯（${startTime}〜${endTime}）には、既に他の予約（${conflict['開始時間']}〜${conflict['終了時間']}）が入っています。` }, { status: 409 });
     }
 
-    const bookingStatus = isBanCandidate ? 'CANCELED (BAN受付不可)' : 'ACTIVE';
+    const bookingStatus = isBanCandidate ? 'CANCELED' : 'ACTIVE';
 
     const bookingPayload = {
       bookingId: `BK-${Date.now()}`,
@@ -196,24 +210,30 @@ export async function POST(request: Request) {
       gasUrl: process.env.NEXT_PUBLIC_GAS_API_URL || ''
     };
 
-    await createBookingInSheet(bookingPayload);
-
-    // Skip audit log table equivalent for Sheet API to reduce latency for now.
-
+    // I列「予約拒否」などの BAN 候補者の場合：枠を確保せずお断りメールのみ
     if (isBanCandidate) {
-      // Send Ban Refusal Email via GAS
       const gasUrl = process.env.NEXT_PUBLIC_GAS_API_URL || '';
       try {
         await fetch(gasUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ action: 'sendBanRefusalEmail', data: bookingPayload })
+          body: JSON.stringify({ 
+            action: 'sendBanRefusalEmail', 
+            data: { ...bookingPayload, name: name.replace("[BAN疑い] ", "") } 
+          })
         });
       } catch (err) {
         console.error('Failed to trigger BAN email via GAS', err);
       }
-      return NextResponse.json({ success: true, booking: bookingPayload, memberNo: finalMemberNo, message: '規約により受付不可となりました。' }, { status: 201 });
+      return NextResponse.json({ 
+        success: true, 
+        booking: bookingPayload, 
+        memberNo: finalMemberNo, 
+        message: '規約により受付不可となりました。' 
+      }, { status: 201 });
     }
+
+    await createBookingInSheet(bookingPayload);
 
     const storeEmail = 'hoowada-gakki@zero-emission.co.jp';
     const emailBody = `

@@ -11,7 +11,9 @@ function getSheet(sheetName) {
     if (sheetName === '予約一覧') {
       sheet.appendRow(["予約ID", "会員ナンバー", "お名前", "スタジオ", "日付", "開始時間", "終了時間", "利用人数", "合計金額", "ステータス", "キャンセル用トークン", "登録日時"]);
     } else if (sheetName === '顧客リスト') {
-      sheet.appendRow(["会員ナンバー", "お名前", "メールアドレス", "電話番号", "利用停止フラグ", "キャンセル回数", "登録日時", "ご利用回数"]);
+      sheet.appendRow(["会員ナンバー", "お名前", "メールアドレス", "電話番号", "利用停止フラグ", "キャンセル回数", "登録日時", "ご利用回数", "予約拒否"]);
+    } else if (sheetName === '機材リスト') {
+      sheet.appendRow(["スタジオ", "カテゴリー", "名称", "サブカテゴリー"]);
     }
   }
   return sheet;
@@ -35,6 +37,12 @@ function doGet(e) {
     
     if (action === 'getUsers') {
       const sheet = getSheet('顧客リスト');
+      const data = getSheetDataAsJson(sheet);
+      return createJsonResponse({ success: true, data: data });
+    }
+
+    if (action === 'getEquipment') {
+      const sheet = getSheet('機材リスト');
       const data = getSheetDataAsJson(sheet);
       return createJsonResponse({ success: true, data: data });
     }
@@ -79,8 +87,8 @@ function handleDirectCancellation(token) {
   // ステータス更新
   sheet.getRange(rowIdx, 10).setValue('CANCELED');
 
-  // キャンセル回数カウント (既存ロジックと共通)
-  updateCancelCount(bookingData.memberNo, true, false);
+  // キャンセル回数カウント (+1)
+  updateCancelCount(bookingData.memberNo, 1);
 
   return HtmlService.createHtmlOutput(`
     <!DOCTYPE html>
@@ -111,16 +119,19 @@ function handleDirectCancellation(token) {
   `);
 }
 
-// キャンセル回数更新の共通ロジック
-function updateCancelCount(memberNo, isCanceled, wasCanceled) {
+// キャンセル回数更新の共通ロジック (amount: 加算する数 +1 or +3)
+function updateCancelCount(memberNo, amount) {
   if (memberNo && memberNo !== 'ADMIN' && memberNo !== 'GUEST') {
     const uSheet = getSheet('顧客リスト');
     const uData = uSheet.getDataRange().getValues();
     let rowIdx = -1;
     let currentCount = 0;
 
+    const targetNo = String(memberNo).trim().toUpperCase();
+
     for (let i = 1; i < uData.length; i++) {
-      if (uData[i][0] === memberNo) {
+      const sheetNo = String(uData[i][0]).trim().toUpperCase();
+      if (sheetNo === targetNo) {
         rowIdx = i + 1;
         currentCount = Number(uData[i][5]) || 0;
         break;
@@ -128,19 +139,13 @@ function updateCancelCount(memberNo, isCanceled, wasCanceled) {
     }
 
     if (rowIdx !== -1) {
-      if (isCanceled && !wasCanceled) {
-        const newCount = currentCount + 1;
-        uSheet.getRange(rowIdx, 6).setValue(newCount);
-        if (newCount >= 3) {
-          uSheet.getRange(rowIdx, 5).setValue(true); // 3回で自動BAN対象
-        }
-      } else if (!isCanceled && wasCanceled) {
-        const newCount = Math.max(0, currentCount - 1);
-        uSheet.getRange(rowIdx, 6).setValue(newCount);
-        if (newCount < 3) {
-          uSheet.getRange(rowIdx, 5).setValue(false); // 復帰
-        }
-      }
+      const newCount = currentCount + (Number(amount) || 0);
+      uSheet.getRange(rowIdx, 6).setValue(newCount); // F列: キャンセル回数
+      console.log(`Updated cancel count for ${targetNo}: ${currentCount} -> ${newCount}`);
+      
+      // 自動BAN（フラグTRUE化）は行わず、管理画面上で「候補者」として表示するように変更
+    } else {
+      console.warn(`Member not found for cancel count update: ${targetNo}`);
     }
   }
 }
@@ -287,10 +292,11 @@ ${b.name} 様
         u.name,
         u.email,
         u.phone,
-        false,
-        0,
-        regAt,
-        0  // ご利用回数
+        false, // 利用停止フラグ (E列)
+        0,     // キャンセル回数 (F列)
+        regAt, // 登録日時 (G列)
+        0,     // ご利用回数 (H列)
+        false  // 予約拒否 (I列)
       ]);
       return createJsonResponse({ success: true });
     }
@@ -316,11 +322,16 @@ ${b.name} 様
       }
 
       if (!found) {
+        console.warn(`Booking ID not found: ${b.bookingId}`);
         return createJsonResponse({ error: 'Booking ID not found: ' + b.bookingId }, 404);
       }
       
-      // キャンセル回数管理ロジック呼び出し
-      updateCancelCount(memberNo, isCanceled, wasCanceled);
+      console.log(`Updated status for ${b.bookingId} to ${b.status}. memberNo: ${memberNo}, wasCanceled: ${wasCanceled}, isCanceled: ${isCanceled}`);
+      
+      // キャンセル回数管理ロジック (+1)
+      if (isCanceled && !wasCanceled) {
+        updateCancelCount(memberNo, 1);
+      }
 
       return createJsonResponse({ success: true });
     }
@@ -329,9 +340,19 @@ ${b.name} 様
       const sheet = getSheet('顧客リスト');
       const u = payload.data;
       const data = sheet.getDataRange().getValues();
+      const targetNo = String(u.memberNo).trim().toUpperCase();
+
       for (let i = 1; i < data.length; i++) {
-        if (data[i][0] === u.memberNo) {
-          sheet.getRange(i + 1, 5).setValue(u.banStatus);
+        const sheetNo = String(data[i][0]).trim().toUpperCase();
+        if (sheetNo === targetNo) {
+          const isBanned = (u.banStatus === true || String(u.banStatus).toLowerCase() === 'true');
+          const val = isBanned ? "TRUE" : "FALSE";
+          // E列: 利用停止フラグ
+          sheet.getRange(i + 1, 5).setValue(val);
+          // I列: 予約拒否
+          sheet.getRange(i + 1, 9).setValue(val);
+          
+          console.log(`Updated user ${targetNo}: E-col=${val}, I-col=${val}`);
           return createJsonResponse({ success: true });
         }
       }
@@ -361,9 +382,9 @@ ${b.name} 様
         const uSheet = getSheet('顧客リスト');
         const uData = uSheet.getDataRange().getValues();
         for (let i = 1; i < uData.length; i++) {
-          if (uData[i][0] === memberNo) {
-            uSheet.getRange(i + 1, 6).setValue(3); // 来店なし時は一気に3（一発BAN）へ
-            uSheet.getRange(i + 1, 5).setValue(true); // 無断キャンセル=一発BAN
+          if (uData[i][0].toString() === memberNo.toString()) {
+            // 来店なしは+3加算
+            updateCancelCount(memberNo, 3);
             break;
           }
         }

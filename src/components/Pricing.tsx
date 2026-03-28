@@ -7,7 +7,7 @@ export default function Pricing() {
   const [hours, setHours] = useState<number>(1);
   
   const calcPeople = Math.min(5, Math.max(1, peopleCount));
-  const calcHours = Math.min(3, Math.max(1, hours));
+  const calcHours = Math.min(8, Math.max(1, hours));
   
   const basePricePerHour = 440;
   const totalPrice = calcPeople * basePricePerHour * calcHours;
@@ -45,9 +45,9 @@ export default function Pricing() {
                 className="btn-outline" style={{ padding: '5px 15px', fontSize: '1.2rem' }}>-</button>
               <span style={{ fontSize: '1.5rem', fontWeight: 'bold', width: '40px', textAlign: 'center' }}>{hours}</span>
               <button 
-                onClick={() => setHours(Math.min(3, hours + 1))}
-                disabled={hours >= 3}
-                className="btn-outline" style={{ padding: '5px 15px', fontSize: '1.2rem', opacity: hours >= 3 ? 0.3 : 1 }}>+</button>
+                onClick={() => setHours(Math.min(8, hours + 1))}
+                disabled={hours >= 8}
+                className="btn-outline" style={{ padding: '5px 15px', fontSize: '1.2rem', opacity: hours >= 8 ? 0.3 : 1 }}>+</button>
               <span style={{ marginLeft: '5px' }}>時間</span>
             </div>
           </div>
@@ -62,7 +62,6 @@ export default function Pricing() {
 
       <div style={{ marginTop: '30px', backgroundColor: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', padding: '20px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
         <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <li style={{ color: 'var(--accent-blue)' }}>小学生以下は無料です (付き添いのみの場合は無料、演奏する場合は通常料金)。</li>
           <li style={{ color: 'var(--accent-blue)' }}>会員証は無料で発行いたします。</li>
           <li style={{ color: 'var(--accent-blue)' }}>予約は1ヶ月先まで可能です。</li>
         </ul>

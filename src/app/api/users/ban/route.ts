@@ -67,7 +67,8 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ success: true });
+    const gasJson = await response.json();
+    return NextResponse.json(gasJson);
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

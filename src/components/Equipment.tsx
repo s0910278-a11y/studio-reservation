@@ -1,60 +1,61 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-// Data structure for the equipment list
-type EquipmentItem = { name: string, subCategory: string, image: string, imagePos?: string };
-
-const equipmentData: Record<string, { category: string, items: EquipmentItem[] }[]> = {
-  'Studio A': [
-    {
-      category: 'GUITAR AMP',
-      items: [
-        { name: 'Fender FM212R', subCategory: 'Combo', image: 'https://rvb-img.reverb.com/i/s--PllrDFkx--/quality=medium-low,height=800,width=800,fit=contain/ba711208-e189-4933-9167-cf20fd7040f5.jpg' },
-        { name: 'Jet City50', subCategory: 'Amp Head', image: 'https://rvb-img.reverb.com/i/s--Qbi9gpBx--/quality=medium-low,height=800,width=800,fit=contain/judxainulva9mge1fjp9.jpg' },
-        { name: 'MESA BOOGIE 12インチ×2', subCategory: 'Cabinet', image: 'https://rvb-img.reverb.com/i/s--vu_Iue76--/quality=medium-low,height=800,width=800,fit=contain/us7qtcrwgq9fderlfbbr.jpg' },
-      ]
-    },
-    {
-      category: 'BASS AMP',
-      items: [
-        { name: 'TRACE ELLIOT GP7', subCategory: 'Combo', image: 'https://rvb-img.reverb.com/i/s--t90_TS8i--/quality=medium-low,height=800,width=800,fit=contain/vypzy2y46tiexqevbxup.jpg' },
-      ]
-    },
-    {
-      category: 'DRUMS',
-      items: [
-        { name: 'Pearl Standard Maple', subCategory: 'Drum Kit', image: 'https://drumcenternh.com/cdn/shop/files/Pearl_MM6P943XPSCMastersMaple103PianoBlack.webp?v=1719152329' },
-      ]
-    }
-  ],
-  'Studio B': [
-    {
-      category: 'GUITAR AMP',
-      items: [
-        { name: 'Roland JC-120', subCategory: 'Combo', image: 'https://static.roland.com/assets/images/products/gallery/jc-120_front_panel_gal.jpg' },
-        { name: 'PEAVEY 5150', subCategory: 'Combo', image: 'https://rvb-img.reverb.com/i/s--JR-gDD4G--/quality=medium-low,height=800,width=800,fit=contain/e54d127c-5146-479e-ab62-8fca2ce3d4bc.jpeg' },
-      ]
-    },
-    {
-      category: 'BASS AMP',
-      items: [
-        { name: 'Ampeg BA-115', subCategory: 'Combo', image: 'https://rvb-img.reverb.com/i/s--9usBFqmH--/quality=medium-low,height=800,width=800,fit=contain/nzc0uxcvwkrs1ubpfkyt.jpg' },
-      ]
-    },
-    {
-      category: 'DRUMS',
-      items: [
-        { name: 'Pearl Forum Series', subCategory: 'Drum Kit', image: 'https://rvb-img.reverb.com/i/s--nDpo00g4--/quality=medium-low,height=800,width=800,fit=contain/dzfa8r8myls44qlh3asc.jpg' },
-      ]
-    }
-  ]
+// Data structure for the equipment item from sheet
+type EquipmentItem = {
+  studio: string;
+  category: string;
+  name: string;
+  subCategory: string;
 };
 
 export default function Equipment() {
   const [activeStudio, setActiveStudio] = useState<'Studio A' | 'Studio B'>('Studio A');
+  const [equipment, setEquipment] = useState<EquipmentItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadEquipment = async () => {
+      try {
+        const res = await fetch('/api/equipment');
+        const data = await res.json();
+        
+        if (Array.isArray(data)) {
+          const mapped = data.map((item: any) => ({
+            studio: item['スタジオ'] || '',
+            category: item['カテゴリー'] || '',
+            name: item['名称'] || '',
+            subCategory: item['サブカテゴリー'] || ''
+          }));
+          setEquipment(mapped);
+        }
+      } catch (err) {
+        console.error('Failed to load equipment:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadEquipment();
+  }, []);
+
+  // Filter and Grouping Logic
+  const filtered = equipment.filter(item => item.studio === activeStudio);
+  const categories = Array.from(new Set(filtered.map(item => item.category)));
+  const grouped = categories.map(cat => ({
+    category: cat,
+    items: filtered.filter(item => item.category === cat)
+  }));
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '50px', color: 'var(--text-secondary)' }}>
+        機材情報を読み込み中...
+      </div>
+    );
+  }
 
   return (
-    <div>
+    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
       <p style={{ textAlign: 'center', marginBottom: '30px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
         ※機材はメンテナンス等により予告なく変更される場合があります。
       </p>
@@ -87,37 +88,51 @@ export default function Equipment() {
         </button>
       </div>
 
-      {/* Equipment List */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', justifyContent: 'center' }}>
-        {equipmentData[activeStudio].flatMap(sec => sec.items.map(item => ({...item, categoryName: sec.category}))).map((item, itemIdx) => (
-          <div key={itemIdx} className="panel" style={{ width: '200px', flex: '0 0 auto', padding: '15px' }}>
-            <img 
-              src={item.image} 
-              alt={item.name} 
-              style={{ 
-                width: '100%', 
-                height: '110px', 
-                objectFit: 'cover', 
-                objectPosition: item.imagePos || 'center',
-                backgroundColor: '#333', 
-                marginBottom: '10px', 
-                borderRadius: '6px' 
-              }} 
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <h4 style={{ fontSize: '0.95rem', fontWeight: 'bold' }}>{item.name}</h4>
-            </div>
-            <p style={{ 
-              color: 'var(--text-secondary)', 
-              fontSize: '0.8rem', 
-              marginTop: '5px',
-              display: 'inline-block',
-              backgroundColor: '#333',
-              padding: '2px 6px',
-              borderRadius: '4px'
+      {/* Empty State */}
+      {grouped.length === 0 && (
+        <div className="panel" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+          現在、機材データが登録されていません。
+        </div>
+      )}
+
+      {/* Equipment List by Category */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+        {grouped.map((sec, secIdx) => (
+          <div key={secIdx} className="panel" style={{ padding: '20px' }}>
+            <h3 style={{ 
+              fontSize: '1rem', 
+              color: 'var(--accent-blue)', 
+              borderBottom: '2px solid var(--accent-blue)', 
+              paddingBottom: '8px',
+              marginBottom: '15px',
+              fontWeight: 'bold'
             }}>
-              {item.categoryName} - {item.subCategory}
-            </p>
+              {sec.category}
+            </h3>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {sec.items.map((item, itemIdx) => (
+                <li key={itemIdx} style={{ 
+                  padding: '10px 0', 
+                  borderBottom: itemIdx === sec.items.length - 1 ? 'none' : '1px solid #333',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <span style={{ fontWeight: '500' }}>{item.name}</span>
+                  {item.subCategory && (
+                    <span style={{ 
+                      fontSize: '0.75rem', 
+                      color: 'var(--text-secondary)',
+                      backgroundColor: '#2a2a2a',
+                      padding: '2px 8px',
+                      borderRadius: '4px'
+                    }}>
+                      {item.subCategory}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
           </div>
         ))}
       </div>

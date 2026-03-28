@@ -71,3 +71,15 @@ export const createUserInSheet = async (userData: any) => {
   
   return json.success;
 };
+
+// 機材リストの取得
+export const getEquipmentFromSheet = async () => {
+  const url = getGasUrl();
+  const res = await fetch(`${url}?action=getEquipment`, { next: { revalidate: 0 } });
+  if (!res.ok) throw new Error('Failed to fetch equipment from GAS');
+  
+  const json = await res.json();
+  if (json.error) throw new Error(json.error);
+  
+  return json.data || [];
+};

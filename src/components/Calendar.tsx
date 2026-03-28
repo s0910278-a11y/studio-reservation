@@ -19,8 +19,8 @@ const MIN_WEEK_OFFSET = 0;
 
 // カレンダーの行は30分刻み（予約可能最終時刻を17:30とし、18:30まで表示）
 const TIME_SLOTS = [
-  "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", 
-  "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00"
+  "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", 
+  "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30"
 ];
 
 // Placeholder for generating a 7-day week map starting from today
@@ -86,11 +86,11 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
 
   // Helper to check if a 1-hour block (2 slots) starting at timeIdx is available
   const canBook1HourFrom = (studioName: string, dateStr: string, timeIdx: number) => {
-    // 18:00 (index 15) は開始不可
+    // 営業時間終了(19:00) を考慮
+    // 18:00 (index 14) 開始なら 19:00 終了で1時間可能。
+    // 18:30 (index 15) 開始なら 30分 しか確保できない。
     if (timeIdx >= TIME_SLOTS.length - 1) return false;
     const time1 = TIME_SLOTS[timeIdx];
-    // 17:30 (最後から2番目) の場合、次のスロット(18:00)は描画行だが予約開始不可枠
-    // 17:30開始→18:30終了の1時間枠は有効。18:00スロット自体がACTIVE予約で塞がれていなければOK
     const time2 = TIME_SLOTS[timeIdx + 1];
     return !isSlotOccupiedByActive(studioName, dateStr, time1) && !isSlotOccupiedByActive(studioName, dateStr, time2);
   };
@@ -166,11 +166,19 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
           ← 横にスクロールして日付を確認できます →
         </div>
       )}
-      <div style={{ overflowX: 'auto', overflowY: 'visible', width: '100%', border: '1px solid var(--border-color)', borderRadius: '8px', maxHeight: 'none' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: isDisplayMode ? 'auto' : '600px', textAlign: 'center' }}>
+      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', width: '100%', border: '1px solid var(--border-color)', borderRadius: '8px', maxHeight: 'none' }}>
+        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, minWidth: isDisplayMode ? 'auto' : '700px', textAlign: 'center' }}>
           <thead>
             <tr>
-              <th style={{ padding: isDisplayMode ? '5px' : '10px 15px', borderBottom: '1px solid var(--border-color)', borderRight: '1px solid var(--border-color)', backgroundColor: '#222' }}></th>
+              <th style={{ 
+                padding: isDisplayMode ? '5px' : '10px 15px', 
+                borderBottom: '1px solid var(--border-color)', 
+                borderRight: '1px solid var(--border-color)', 
+                backgroundColor: '#222',
+                position: 'sticky',
+                left: 0,
+                zIndex: 10
+              }}></th>
               {weekDates.map((date, idx) => (
                 <th key={idx} suppressHydrationWarning style={{ padding: isDisplayMode ? '5px' : '10px 15px', borderBottom: '1px solid var(--border-color)', borderRight: '1px solid var(--border-color)', backgroundColor: '#222', width: '12%' }}>
                   <div suppressHydrationWarning style={{ fontSize: isDisplayMode ? '0.8rem' : '0.9rem' }}>{date.getMonth()+1}/{date.getDate()}</div>
@@ -180,17 +188,34 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
             </tr>
           </thead>
           <tbody>
+            {/* 11:00 開始境界用のスペーサー行 */}
+            <tr>
+               <td style={{ 
+                  padding: 0, 
+                  height: isDisplayMode ? '20px' : '16px', 
+                  borderRight: '1px solid var(--border-color)', 
+                  backgroundColor: '#222', 
+                  position: 'sticky',
+                  left: 0,
+                  zIndex: 5
+                }}></td>
+               {weekDates.map((_, colIdx) => (
+                 <td key={`start-spacer-${colIdx}`} style={{ height: isDisplayMode ? '20px' : '16px' }}></td>
+               ))}
+            </tr>
             {TIME_SLOTS.map((time, idx) => (
               <tr key={idx}>
                 <td style={{ 
                   padding: 0, 
                   height: isDisplayMode ? '45px' : '32px', 
                   borderRight: '1px solid var(--border-color)', 
-                  borderBottom: '1px solid transparent',
+                  borderBottom: '1px solid var(--border-color)',
                   color: 'var(--text-secondary)', 
                   backgroundColor: '#222',
-                  position: 'relative',
-                  width: isDisplayMode ? '80px' : '65px'
+                  position: 'sticky',
+                  left: 0,
+                  width: isDisplayMode ? '80px' : '65px',
+                  zIndex: 5
                 }}>
                   <span style={{
                     position: 'absolute',
@@ -202,7 +227,7 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                     lineHeight: '1',
                     fontSize: isDisplayMode ? '1.1rem' : '0.9rem',
                     fontWeight: isDisplayMode ? 'bold' : 'normal',
-                    zIndex: 2
+                    zIndex: 6
                   }}>
                     {time}
                   </span>
@@ -235,8 +260,8 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                   const isOccupied = !!bookingObj && bookingObj.status === 'ACTIVE';
                   const isCanceledHistory = !!bookingObj && bookingObj.status?.startsWith('CANCELED');
                   
-                  const canStart = !isOccupied && !isPastOrTooSoon && canBook1HourFrom(targetStudioStr, dateStr, idx);
-                  const isInteractive = !isOccupied && !isPastOrTooSoon && canStart;
+                  const canStart = isAdmin || (!isOccupied && !isPastOrTooSoon && canBook1HourFrom(targetStudioStr, dateStr, idx));
+                  const isInteractive = !isOccupied && (isAdmin || (!isPastOrTooSoon && canStart));
 
                   const isHighlighted = isInteractive && isCellHovered(colIdx, idx);
                   const isHoveredFromAbove = idx > 0 && isCellHovered(colIdx, idx) && canBook1HourFrom(targetStudioStr, dateStr, idx - 1);
@@ -298,27 +323,48 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                         borderBottom: '1px solid var(--border-color)', 
                         borderRight: '1px solid var(--border-color)',
                         borderTop: isOccupied && time === bookingObj?.startTime ? '2px solid #ffffff' : `1px solid ${borderTopColor}`,
-                        cursor: isInteractive ? 'pointer' : (isOccupied ? 'default' : 'not-allowed'),
-                        backgroundColor: bgColor,
-                        opacity: opacity,
-                        transition: 'background-color 0.1s, box-shadow 0.2s',
-                        position: 'relative',
-                        boxShadow: boxShadowCSS
-                      }}
-                      onMouseEnter={() => {
-                        if (isInteractive) setHoveredCell({ dateIdx: colIdx, timeIdx: idx });
-                      }}
-                      onMouseLeave={() => {
-                        if (isInteractive) setHoveredCell(null);
-                      }}
-                      onClick={() => {
-                        if (isInteractive && onSlotClick) {
-                          onSlotClick(activeStudio, date, time);
-                        } else if (isInteractive) {
-                          window.location.assign('#booking-form');
-                        }
+                        padding: 0 // tdのパディングを0にして中のdivをフルサイズに
                       }}
                     >
+                      <div
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          minHeight: isDisplayMode ? '45px' : '32px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: isInteractive ? 'pointer' : 'not-allowed',
+                          backgroundColor: bgColor,
+                          opacity: opacity,
+                          transition: 'background-color 0.1s, box-shadow 0.2s',
+                          position: 'relative',
+                          boxShadow: boxShadowCSS,
+                          zIndex: 1,
+                          pointerEvents: 'auto'
+                        }}
+                        onMouseEnter={() => {
+                          if (isInteractive) setHoveredCell({ dateIdx: colIdx, timeIdx: idx });
+                        }}
+                        onMouseLeave={() => {
+                          if (isInteractive) setHoveredCell(null);
+                        }}
+                        onClick={() => {
+                          if (isAdmin) console.log(`[Calendar Click] isAdmin: ${isAdmin}, studio: ${targetStudioStr}, date: ${dateStr}, time: ${time}`);
+                          if (isInteractive && onSlotClick) {
+                            onSlotClick(targetStudioStr, date, time);
+                          } else if (isInteractive) {
+                            window.location.assign('#booking-form');
+                          }
+                        }}
+                      >
+                         {/* 管理者用：予約名の一部表示（オプション） */}
+                         {isAdmin && bookingObj && bookingObj.name && time === bookingObj.startTime && (
+                           <span style={{ fontSize: '0.65rem', color: '#fff', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '90%' }}>
+                             {bookingObj.name.substring(0, 4)}...
+                           </span>
+                         )}
+                      </div>
                     </td>
                   );
                 })}
@@ -332,7 +378,9 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                   borderRight: '1px solid var(--border-color)', 
                   color: 'var(--text-secondary)', 
                   backgroundColor: '#222', 
-                  position: 'relative',
+                  position: 'sticky',
+                  left: 0,
+                  zIndex: 5
                 }}>
                   <span style={{
                     position: 'absolute',
@@ -346,7 +394,7 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                     fontWeight: isDisplayMode ? 'bold' : 'normal',
                     zIndex: 2
                   }}>
-                    18:30
+                    19:00
                   </span>
                </td>
                {weekDates.map((_, colIdx) => (
@@ -362,20 +410,20 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
         <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '15px', fontSize: '0.85rem', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             <div style={{ width: '12px', height: '12px', backgroundColor: '#1a1a1a', border: '1px solid #555', borderRadius: '2px' }}></div>
-            <span>空き枠 (予約可)</span>
+            <span>空き枠（予約可）</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <div style={{ width: '12px', height: '12px', backgroundColor: '#3b82f6', borderRadius: '2px' }}></div>
-            <span>予約済 (Studio A)</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <div style={{ width: '12px', height: '12px', backgroundColor: '#6366f1', borderRadius: '2px' }}></div>
-            <span>予約済 (Studio B)</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <div style={{ width: '12px', height: '12px', backgroundColor: '#222', borderRadius: '2px' }}></div>
-            <span>時間外・選択不可</span>
-          </div>
+          {activeStudio === 'Studio A' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <div style={{ width: '12px', height: '12px', backgroundColor: '#3b82f6', borderRadius: '2px' }}></div>
+              <span>予約済（Studio A）</span>
+            </div>
+          )}
+          {activeStudio === 'Studio B' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <div style={{ width: '12px', height: '12px', backgroundColor: '#6366f1', borderRadius: '2px' }}></div>
+              <span>予約済（Studio B）</span>
+            </div>
+          )}
         </div>
       )}
     </div>

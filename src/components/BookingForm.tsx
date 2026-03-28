@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 
 const TIME_SLOTS = [
-  "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", 
-  "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"
+  "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", 
+  "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00"
 ];
 
 interface BookingFormProps {
   prefill?: { studio: string, date: string, startTime: string } | null;
+  onSuccess?: () => void;
 }
 
-export default function BookingForm({ prefill }: BookingFormProps) {
+export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
   const [userType, setUserType] = useState<'member' | 'new'>('member');
   const [formData, setFormData] = useState({
     name: '',
@@ -18,10 +19,13 @@ export default function BookingForm({ prefill }: BookingFormProps) {
     memberNo: '',
     studio: 'Studio A',
     date: '',
-    startTime: '10:30',
+    startTime: '11:00',
     durationHours: 1,
     peopleCount: 1
   });
+  const [agreed, setAgreed] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -39,24 +43,34 @@ export default function BookingForm({ prefill }: BookingFormProps) {
       .catch(console.error);
   }, [prefill, success]);
 
+  // Handle scroll on error (rejection)
+  useEffect(() => {
+    if (errorMsg && (errorMsg.includes('規約') || errorMsg.includes('受付不可'))) {
+      const element = document.getElementById('booking-form');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  }, [errorMsg]);
+
   // Calculate available durations based on selected start time
   const getAvailableDurations = () => {
     if (!formData.date || !formData.startTime) return [1];
-    let max = 3; // Max 3 hours
+    let max = 8; // Max 8 hours
     const [h, m] = formData.startTime.split(':').map(Number);
     const startMins = h * 60 + m;
     
-    // Bounds check against 18:30 (1110 mins)
-    if (startMins + 60 > 1110) max = 0;
-    else if (startMins + 120 > 1110) max = 1;
-    else if (startMins + 180 > 1110) max = 2;
+    // Bounds check against 19:00 (1140 mins)
+    const remainingMins = 1140 - startMins;
+    max = Math.min(8, Math.floor(remainingMins / 60));
 
     // Check bookedSlots to see if anything blocks us
     for (const b of bookedSlots) {
-       if (b.studioId === formData.studio && b.date.startsWith(formData.date)) {
+       const bDate = (b.date || "").substring(0, 10);
+       const fDate = (formData.date || "").substring(0, 10);
+       if (b.studioId === formData.studio && bDate === fDate) {
           const [bh, bm] = b.startTime.split(':').map(Number);
           const bStartMins = bh * 60 + bm;
-          // If a booking starts AFTER our start time, the space between is our max limit.
           if (bStartMins > startMins) { 
              const diffHours = (bStartMins - startMins) / 60;
              if (diffHours < max) max = Math.floor(diffHours);
@@ -65,9 +79,9 @@ export default function BookingForm({ prefill }: BookingFormProps) {
     }
     
     const options = [];
-    if (max >= 1) options.push(1);
-    if (max >= 2) options.push(2);
-    if (max >= 3) options.push(3);
+    for (let i = 1; i <= max; i++) {
+      options.push(i);
+    }
     return options.length ? options : [1];
   };
 
@@ -132,6 +146,12 @@ export default function BookingForm({ prefill }: BookingFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!agreed) {
+      setErrorMsg('利用規約を確認し、同意のチェックを入れてください。');
+      return;
+    }
+
     setLoading(true);
     setErrorMsg('');
 
@@ -168,6 +188,7 @@ export default function BookingForm({ prefill }: BookingFormProps) {
         }
         setIssuedMemberNo(data.memberNo || formData.memberNo);
         setSuccess(true);
+        if (onSuccess) onSuccess();
       } else {
         const data = await res.json();
         if (data.error && (data.error.includes("既に") || data.error.includes("occupied"))) {
@@ -328,7 +349,7 @@ export default function BookingForm({ prefill }: BookingFormProps) {
         </div>
 
         <div className="form-group" style={{ flex: 1, minWidth: '150px' }}>
-          <label className="form-label">ご利用時間 (1〜3時間) <span style={{color: 'var(--error-color)'}}>*</span></label>
+          <label className="form-label">ご利用時間 (1〜8時間) <span style={{color: 'var(--error-color)'}}>*</span></label>
           <select 
             name="durationHours" 
             value={formData.durationHours}
@@ -340,7 +361,7 @@ export default function BookingForm({ prefill }: BookingFormProps) {
               <option key={h} value={h}>{h}時間</option>
             ))}
           </select>
-          {availableDurations.length < 3 && availableDurations[0] !== 0 && (
+          {availableDurations.length < 8 && availableDurations[0] !== 0 && (
             <p style={{ color: 'var(--accent-blue)', fontSize: '0.75rem', marginTop: '5px' }}>
               ※前後の予約枠により、最大{availableDurations[availableDurations.length - 1]}時間まで。
             </p>
@@ -379,6 +400,28 @@ export default function BookingForm({ prefill }: BookingFormProps) {
         </p>
       </div>
 
+      <div style={{ marginTop: '25px', display: 'flex', alignItems: 'flex-start', gap: '10px', backgroundColor: '#222', padding: '15px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+        <input 
+          type="checkbox" 
+          id="agreeTerms" 
+          checked={agreed} 
+          disabled={!hasScrolledToBottom && !agreed}
+          onChange={(e) => setAgreed(e.target.checked)}
+          style={{ width: '20px', height: '20px', cursor: agreed || hasScrolledToBottom ? 'pointer' : 'not-allowed', marginTop: '2px' }}
+        />
+        <label htmlFor="agreeTerms" style={{ fontSize: '0.95rem', cursor: agreed || hasScrolledToBottom ? 'pointer' : 'not-allowed', flex: 1, opacity: agreed || hasScrolledToBottom ? 1 : 0.6 }}>
+          <button 
+            type="button" 
+            onClick={() => setShowTerms(true)} 
+            style={{ color: 'var(--accent-blue)', textDecoration: 'underline', fontWeight: 'bold', display: 'inline', padding: 0, background: 'none' }}
+          >
+            スタジオ利用規約
+          </button>
+          を確認し、同意しました <span style={{color: 'var(--error-color)'}}>*</span>
+          {!hasScrolledToBottom && !agreed && <span style={{ fontSize: '0.8rem', marginLeft: '8px', color: 'var(--accent-blue)' }}>(規約を最後まで確認してください)</span>}
+        </label>
+      </div>
+
       <div style={{ marginTop: '20px' }}>
         <button type="submit" className="btn-primary" disabled={loading} style={{ width: '100%', padding: '15px' }}>
           {loading ? '処理中...' : '▷ 予約を確定する'}
@@ -402,6 +445,121 @@ export default function BookingForm({ prefill }: BookingFormProps) {
           </a>
         </div>
       </div>
+      {/* Terms Modal */}
+      {showTerms && (
+        <div style={{ 
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+          backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+          zIndex: 1000, padding: '20px' 
+        }}>
+          <div style={{ 
+            backgroundColor: '#1a1a1a', maxWidth: '650px', width: '100%', maxHeight: '90vh', 
+            borderRadius: '12px', display: 'flex', flexDirection: 'column', border: '1px solid #333', position: 'relative' 
+          }}>
+            <div style={{ padding: '20px 25px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1a1a1a', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
+              <h3 style={{ margin: 0, color: 'var(--accent-blue)' }}>スタジオ利用規約</h3>
+              <button onClick={() => setShowTerms(false)} style={{ fontSize: '1.5rem', color: '#999', padding: '5px' }}>&times;</button>
+            </div>
+            
+            <div 
+              onScroll={(e: any) => {
+                const target = e.target;
+                const isBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 10; // 若干の余裕を持たせる
+                if (isBottom) setHasScrolledToBottom(true);
+              }}
+              style={{ padding: '25px', fontSize: '0.95rem', lineHeight: '1.7', overflowY: 'auto', flex: 1, color: '#ddd' }}
+            >
+              <div style={{ whiteSpace: 'pre-wrap' }}>
+                <p style={{ marginBottom: '20px', fontWeight: 'bold', color: '#fff', fontSize: '1.1rem', borderLeft: '4px solid var(--accent-blue)', paddingLeft: '10px' }}>
+                  【スタジオ利用規約】
+                </p>
+
+                <p style={{ fontWeight: 'bold', color: '#fff', marginTop: '20px', marginBottom: '10px' }}>■ スタジオ利用料金について</p>
+                <div style={{ marginLeft: '10px', marginBottom: '20px' }}>
+                  1名様：400円（＋税）/1時間<br/>
+                  2名様：800円（＋税）/1時間<br/>
+                  3名様：1,200円（＋税）/1時間<br/>
+                  <p style={{ fontSize: '0.85rem', color: '#aaa', marginTop: '5px' }}>※年齢を問わず、上記の金額となります。</p>
+                </div>
+
+                <p style={{ fontWeight: 'bold', color: '#fff', marginTop: '20px', marginBottom: '10px' }}>■ スタジオ予約について</p>
+                <div style={{ marginLeft: '10px', marginBottom: '20px' }}>
+                  1か月先までの予約を受け付けします。<br/>
+                  ご利用時間 11:00～19:00まで<br/>
+                  <p style={{ fontSize: '0.85rem', color: '#aaa', marginTop: '5px' }}>※当日の利用や時間延長は、アプリの予約空き状況により可能です。</p>
+                </div>
+
+                <p style={{ fontWeight: 'bold', color: '#fff', marginTop: '20px', marginBottom: '10px' }}>■ ご利用のキャンセルについて</p>
+                <div style={{ marginLeft: '10px', marginBottom: '20px' }}>
+                  キャンセル料金は原則発生いたしませんが、当日の利用時間の10分を過ぎてもご来店されない場合は、自動的にキャンセルとさせていただきます。<br/>
+                  キャンセルを前提としての空予約は、ご遠慮願います。<br/>
+                  <p style={{ fontSize: '0.85rem', color: '#aaa', marginTop: '5px' }}>※同じお客様からの空予約が続く場合は、ご利用をお断りさせていただく場合がございますので、ご了承ください。</p>
+                </div>
+
+                <p style={{ fontWeight: 'bold', color: '#fff', marginTop: '20px', marginBottom: '10px' }}>■ スタジオ機材について</p>
+                <div style={{ marginLeft: '10px', marginBottom: '20px' }}>
+                  機材は修理などで予告なしに変更する場合がございます。<br/>
+                  機材の不調や破損があった場合は、速やかにスタッフまでお知らせください。ご対応いたします。<br/>
+                  <span style={{ color: 'var(--error-color)', fontSize: '0.85rem' }}>※スタジオご利用後にお伝えいただいても、その際のスタジオ利用料等はご返金できません。</span><br/><br/>
+                  機材のお持ち込みは可能です。<br/>
+                  <p style={{ fontSize: '0.9rem', color: '#bbb', marginTop: '5px' }}>
+                    ※当店指定のエレキギター、エレキベースは、300円（＋税）/1時間でお貸し出しします。<br/>
+                    ※電子ピアノ（ライトタッチ）、ダイナミックマイク、マイクケーブル、ギターシールドは無料貸出しです。<br/>
+                    ※その他（ドラムスティックやスマホからイヤホン端子への変換アダプター等）の貸出しはございません。<br/>
+                    ※レンタルについての詳細は、当店スタッフまでお尋ねください。<br/>
+                    ※当スタジオ利用に際し、お持ち込みの機材の不調や破損があった場合は、ご対応いたしかねます。
+                  </p>
+                  <p style={{ marginTop: '10px' }}>
+                    機材の破損については、故意に破損があった場合や、誤った使用方法、当店が定めるルール違反があった場合には、修理代金、または買い上げを請求させていただきます。<br/>
+                    使用方法やご不明な点がございましたら、当店スタッフまでお尋ねください。
+                  </p>
+                </div>
+
+                <p style={{ fontWeight: 'bold', color: '#fff', marginTop: '20px', marginBottom: '10px' }}>■ お願い</p>
+                <div style={{ marginLeft: '10px', marginBottom: '20px', fontSize: '0.9rem' }}>
+                  <ul style={{ paddingLeft: '20px', listStyleType: 'disc' }}>
+                    <li style={{ marginBottom: '8px' }}>セルフスタジオとなりますので、基本セッティングを変えられた方は、お客様ご自身で元にお戻しください。</li>
+                    <li style={{ marginBottom: '8px' }}>他のお客様のご迷惑にならないよう、お客様同士が気持ちよくスタジオをご利用いただくために、基本ルールとマナーを守ってください。</li>
+                    <li style={{ marginBottom: '8px' }}>スタジオ内および八王子大和田店敷地内は禁煙です。</li>
+                    <li style={{ marginBottom: '8px' }}>スタジオ内での飲酒や食べ物の持ち込みは禁止とさせていただきます。</li>
+                    <li style={{ marginBottom: '8px' }}>アルコール以外の飲み物の持ち込みは、お一人様ペットボトル等（フタ付きの飲料）1本までとさせていただきます。</li>
+                    <li style={{ marginBottom: '8px' }}>スタジオ内は火気厳禁です。</li>
+                    <li style={{ marginBottom: '8px' }}>他のお客様のご迷惑にならないように、演奏中のスタジオへの入退出はなるべくご遠慮ください。</li>
+                    <li style={{ marginBottom: '8px' }}>機材を移動させたり、セッティングを変更した場合は、必ず使用前の状態に戻してから退室をお願いします。<br/>（アンプやミキサーなどの設定、ドラムのセッティングなど）</li>
+                    <li style={{ marginBottom: '8px' }}>アンプの電源を切る時や、シールドの抜き差しはボリュームをゼロにして行ってください。機材の故障につながります。お守りいただけず故障した場合は、料金を請求する場合がございます。</li>
+                    <li style={{ marginBottom: '8px' }}>5分前には後片付けを始めて、時間内に退出できるようにお願いします。</li>
+                    <li style={{ marginBottom: '8px' }}>忘れ物には十分にお気を付けください。当店では忘れ物の保管はいたしませんので、ご了承ください。</li>
+                    <li style={{ marginBottom: '8px' }}>お客様の貴重品は、お客様ご自身で責任を持って管理してください。貴重品等の盗難や紛失があっても、責任を負いかねますのでご了承ください。</li>
+                    <li style={{ marginBottom: '8px' }}>近隣周辺の迷惑にならないように、駐車場でのたむろ行為や路上駐車、ゴミやタバコのポイ捨てはおやめください。</li>
+                    <li>度重なる違反や迷惑行為、悪質な違反があった時は、ご利用をお断りする場合があります。</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div style={{ backgroundColor: '#222', padding: '15px', borderRadius: '8px', border: '1px solid #444', marginBottom: '10px', textAlign: 'center' }}>
+                {!hasScrolledToBottom ? (
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--accent-blue)', fontWeight: 'bold' }}>
+                    ⬇ 規約を最後までスクロールして確認してください ⬇
+                  </p>
+                ) : (
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--success-color)', fontWeight: 'bold' }}>
+                    ✔ 規約をすべて確認しました
+                  </p>
+                )}
+              </div>
+
+              <button 
+                onClick={() => { setAgreed(true); setShowTerms(false); }} 
+                className="btn-primary" 
+                disabled={!hasScrolledToBottom}
+                style={{ width: '100%', padding: '15px', opacity: hasScrolledToBottom ? 1 : 0.5, cursor: hasScrolledToBottom ? 'pointer' : 'not-allowed' }}
+              >
+                規約に同意して予約に進む
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 }

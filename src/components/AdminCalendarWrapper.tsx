@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Calendar from './Calendar';
 import AdminBookingModal from './AdminBookingModal';
 
@@ -19,6 +19,11 @@ export default function AdminCalendarWrapper() {
   const [weekOffset, setWeekOffset] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ studio: string, dateStr: string, time: string } | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const weekDates = generateWeekStartDates(weekOffset);
 
@@ -28,6 +33,7 @@ export default function AdminCalendarWrapper() {
     const dd = String(dateObj.getDate()).padStart(2, '0');
     const dateStr = `${yyyy}-${mm}-${dd}`;
     
+    console.log(`[AdminWrapper] Slot Clicked! Studio: ${studio}, Date: ${dateStr}, Time: ${time}`);
     setSelectedSlot({ studio, dateStr, time });
     setModalOpen(true);
   };
@@ -82,11 +88,11 @@ export default function AdminCalendarWrapper() {
       <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: '300px' }}>
           <div style={{ fontWeight: 'bold', fontSize: '1.2rem', color: 'var(--accent-blue)', marginBottom: '10px', textAlign: 'center' }}>Studio A</div>
-          <Calendar onSlotClick={handleAdminSlotClick} defaultStudio="Studio A" hideTabs={true} isAdmin={true} hideNav={true} hideLegend={true} weekOffsetOverride={weekOffset} />
+          <Calendar onSlotClick={handleAdminSlotClick} defaultStudio="Studio A" hideTabs={true} isAdmin={true} hideNav={true} hideLegend={true} weekOffsetOverride={weekOffset} selectedSlot={selectedSlot} />
         </div>
         <div style={{ flex: 1, minWidth: '300px' }}>
           <div style={{ fontWeight: 'bold', fontSize: '1.2rem', color: 'var(--accent-blue)', marginBottom: '10px', textAlign: 'center' }}>Studio B</div>
-          <Calendar onSlotClick={handleAdminSlotClick} defaultStudio="Studio B" hideTabs={true} isAdmin={true} hideNav={true} hideLegend={true} weekOffsetOverride={weekOffset} />
+          <Calendar onSlotClick={handleAdminSlotClick} defaultStudio="Studio B" hideTabs={true} isAdmin={true} hideNav={true} hideLegend={true} weekOffsetOverride={weekOffset} selectedSlot={selectedSlot} />
         </div>
       </div>
 
@@ -94,15 +100,15 @@ export default function AdminCalendarWrapper() {
       <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '30px', fontSize: '0.9rem', flexWrap: 'wrap', backgroundColor: '#1a1a1a', padding: '15px', borderRadius: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ width: '16px', height: '16px', backgroundColor: '#1a1a1a', border: '1px solid #555', borderRadius: '3px' }}></div>
-          <span>空き枠 (予約可)</span>
+          <span>空き枠（予約可）</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ width: '16px', height: '16px', backgroundColor: '#3b82f6', borderRadius: '3px' }}></div>
-          <span>予約済 (Studio A)</span>
+          <span>予約済（Studio A）</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ width: '16px', height: '16px', backgroundColor: '#6366f1', borderRadius: '3px' }}></div>
-          <span>予約済 (Studio B)</span>
+          <span>予約済（Studio B）</span>
         </div>
       </div>
 

@@ -1,11 +1,16 @@
 'use client';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Calendar from './Calendar';
 import BookingForm from './BookingForm';
 
 export default function BookingSection() {
   const [selectedSlot, setSelectedSlot] = useState<{ studio: string, date: string, startTime: string } | null>(null);
+  const [mounted, setMounted] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSlotClick = (studio: string, dateObj: Date, time: string) => {
     // Format date as YYYY-MM-DD
@@ -41,10 +46,17 @@ export default function BookingSection() {
             : '予約は即時確定となります。'
           }
           <br/>
-          ※予約可能時間: 10:30〜18:30<br/>
+          ※予約可能時間: 11:00〜19:00<br/>
           ※無断キャンセル等は次回以降のご予約をお断りする場合がございます。
         </p>
-        <BookingForm prefill={selectedSlot} />
+        <BookingForm 
+          prefill={selectedSlot} 
+          onSuccess={() => {
+            if (formRef.current) {
+              formRef.current.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+        />
       </div>
     </>
   );

@@ -7,7 +7,8 @@ export default function AdminUserBanToggle({ memberNo, initialBanStatus }: { mem
   const [loading, setLoading] = useState(false);
 
   const handleToggle = async () => {
-    if (!window.confirm(initialBanStatus ? 'BANを解除しますか？' : 'このユーザーを利用停止(BAN)対象にしますか？')) return;
+    const actionName = initialBanStatus ? '解除' : 'アカウントを停止';
+    if (!window.confirm(`${actionName}しますか？`)) return;
     setLoading(true);
     try {
       const res = await fetch('/api/users/ban', {
@@ -40,7 +41,7 @@ export default function AdminUserBanToggle({ memberNo, initialBanStatus }: { mem
         opacity: loading ? 0.5 : 1
       }}
     >
-      {loading ? '処理中...' : (initialBanStatus ? 'BAN解除' : 'BAN対象')}
+      {loading ? '処理中...' : (initialBanStatus ? '解除' : 'アカウント停止')}
     </button>
   );
 }

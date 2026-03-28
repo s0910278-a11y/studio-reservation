@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     const response = await fetch(gasUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'updateBookingStatus', data: { bookingId, status: 'CANCELED (来店なし)' } })
+      body: JSON.stringify({ action: 'addNoShow', data: { bookingId } })
     });
 
     if (!response.ok) {

@@ -89,15 +89,15 @@ export default function AdminBookingModal({ isOpen, onClose, onSubmit, studio, d
 
           {/* 共通: 利用時間選択 */}
           <div style={{ marginBottom: '20px', borderTop: '1px solid #444', paddingTop: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>利用時間 (最大3時間)</label>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>利用時間 (最大8時間)</label>
             <select 
               className="form-input" 
               value={durationHours} 
               onChange={e => setDurationHours(Number(e.target.value))}
             >
-              <option value={1}>1時間</option>
-              <option value={2}>2時間</option>
-              <option value={3}>3時間</option>
+              {[1, 2, 3, 4, 5, 6, 7, 8].map(h => (
+                <option key={h} value={h}>{h}時間</option>
+              ))}
             </select>
           </div>
 
