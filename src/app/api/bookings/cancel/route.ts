@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     if (booking['ステータス'] !== 'ACTIVE') return NextResponse.json({ error: 'Already cancelled or invalid status' }, { status: 400 });
 
     // Update in Google Sheets via GAS
-    const gasUrl = "https://script.google.com/macros/s/AKfycbxOE4x6w2NNbbrXJ_NSqf2CaTT5LaWvKflPzQnB-jkOuh9mg2IwA9nPcky6fPqcM3Tz4w/exec" || '';
+    const gasUrl = "https://script.google.com/macros/s/AKfycbxOE4x6w2NNbbrXJ_NSqf2CaTT5LaWvKflPzQnB-jkOuh9mg2IwA9nPcky6fPqcM3Tz4w/exec";
     const response = await fetch(gasUrl, {
        method: 'POST',
        headers: { 'Content-Type': 'application/json' },

@@ -7,7 +7,7 @@
  */
 
 const getGasUrl = () => {
-  const url = "https://script.google.com/macros/s/AKfycbxOE4x6w2NNbbrXJ_NSqf2CaTT5LaWvKflPzQnB-jkOuh9mg2IwA9nPcky6fPqcM3Tz4w/exec" || process.env.GAS_API_URL;
+  const url = "https://script.google.com/macros/s/AKfycbxOE4x6w2NNbbrXJ_NSqf2CaTT5LaWvKflPzQnB-jkOuh9mg2IwA9nPcky6fPqcM3Tz4w/exec";
   if (!url) {
     throw new Error('GAS_API_URL is not defined. Please deploy GAS and set the URL in .env');
   }
