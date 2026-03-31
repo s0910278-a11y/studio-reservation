@@ -44,8 +44,8 @@ export default function AdminCalendarWrapper() {
     setLoading(true);
 
     const payload = data.memberNo 
-      ? { memberNo: data.memberNo, name: `【手動登録】`, phone: '(管理者代行入力)', email: '', studio: selectedSlot.studio, date: selectedSlot.dateStr, startTime: selectedSlot.time, peopleCount: 1, durationHours: data.durationHours || 1 }
-      : { name: `【手動登録】${data.name}`, phone: data.phone || '(管理者代行入力)', email: data.email || 'admin@zero-emission.co.jp', memberNo: 'ADMIN', studio: selectedSlot.studio, date: selectedSlot.dateStr, startTime: selectedSlot.time, peopleCount: 1, durationHours: data.durationHours || 1 };
+      ? { memberNo: data.memberNo, name: data.name || '(ID登録)', phone: '(管理者代行入力)', email: '', studio: selectedSlot.studio, date: selectedSlot.dateStr, startTime: selectedSlot.time, peopleCount: 1, durationHours: data.durationHours || 1 }
+      : { name: data.name, phone: data.phone || '(管理者代行入力)', email: data.email || 'admin@zero-emission.co.jp', memberNo: 'ADMIN', studio: selectedSlot.studio, date: selectedSlot.dateStr, startTime: selectedSlot.time, peopleCount: 1, durationHours: data.durationHours || 1 };
 
     try {
       const res = await fetch('/api/bookings', {

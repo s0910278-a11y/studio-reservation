@@ -361,7 +361,8 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                          {/* 管理者用：予約名の一部表示（オプション） */}
                          {isAdmin && bookingObj && bookingObj.name && time === bookingObj.startTime && (
                            <span style={{ fontSize: '0.65rem', color: '#fff', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '90%' }}>
-                             {bookingObj.name.substring(0, 4)}...
+                             {/* 予約が入っている場合（キャンセル済みの場合は名前を表示しない） */}
+                             {bookingObj.status?.startsWith('CANCELED') ? '' : (bookingObj.name || '').replace('【手動登録】', '').substring(0, 4) + '...'}
                            </span>
                          )}
                       </div>

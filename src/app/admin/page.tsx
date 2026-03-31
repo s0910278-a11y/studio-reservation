@@ -97,7 +97,7 @@ export default async function AdminDashboard() {
         </td>
         <td style={{ padding: '10px', textDecoration: isCanceled ? 'line-through' : 'none' }}>{b['スタジオ']}</td>
         <td style={{ padding: '10px' }}>
-          <span style={{ textDecoration: isCanceled ? 'line-through' : 'none' }}>{b['お名前']}</span> 
+          <span style={{ textDecoration: isCanceled ? 'line-through' : 'none' }}>{(b['お名前'] || '').replace('【手動登録】', '')}</span> 
           <span style={{ fontSize: '0.8rem', color: '#888', marginLeft: '5px' }}>({b['会員ナンバー']})</span>
           {isCanceled && (
             <span style={{ marginLeft: '10px', fontSize: '0.75rem', color: '#e53935', border: '1px solid #e53935', padding: '2px 4px', borderRadius: '4px' }}>取消済</span>
@@ -182,7 +182,7 @@ export default async function AdminDashboard() {
                           </td>
                           <td style={{ padding: '8px 10px', fontSize: '0.9rem', textDecoration: isCanceled ? 'line-through' : 'none', color: '#999' }}>{b['スタジオ']}</td>
                           <td style={{ padding: '8px 10px', fontSize: '0.9rem', color: '#999' }}>
-                            <span style={{ textDecoration: isCanceled ? 'line-through' : 'none' }}>{b['お名前']}</span>
+                             <span style={{ textDecoration: isCanceled ? 'line-through' : 'none' }}>{String(b['お名前'] || '').replace('【手動登録】', '')}</span>
                             {isCanceled && (
                               <span style={{ marginLeft: '5px', fontSize: '0.7rem', color: '#888' }}>(取消済)</span>
                             )}
