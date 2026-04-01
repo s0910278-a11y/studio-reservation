@@ -81,49 +81,49 @@ export default function AdminDashboardClient() {
 
   const upcomingBookings = allBookings
     .filter((b: any) => {
-      const dateStr = (b['日付'] || '').substring(0, 10);
+      const dateStr = (b.date || '').substring(0, 10);
       if (!dateStr) return false;
       return dateStr >= todayStr;
     })
     .sort((a: any, b: any) => {
-      const dateCompare = (a['日付'] || '').localeCompare(b['日付'] || '');
+      const dateCompare = (a.date || '').localeCompare(b.date || '');
       if (dateCompare !== 0) return dateCompare;
-      return (a['開始時間'] || '').localeCompare(b['開始時間'] || '');
+      return (a.startTime || '').localeCompare(b.startTime || '');
     })
     .slice(0, 200);
 
   const pastBookings = allBookings
     .filter((b: any) => {
-      const dateStr = (b['日付'] || '').substring(0, 10);
+      const dateStr = (b.date || '').substring(0, 10);
       if (!dateStr) return false;
       return dateStr >= thisMonthStart && dateStr < todayStr;
     })
     .sort((a: any, b: any) => {
-      const bDate = (b['日付'] || '').substring(0, 10);
-      const aDate = (a['日付'] || '').substring(0, 10);
+      const bDate = (b.date || '').substring(0, 10);
+      const aDate = (a.date || '').substring(0, 10);
       const dateCompare = bDate.localeCompare(aDate);
       if (dateCompare !== 0) return dateCompare;
-      return (b['開始時間'] || '').localeCompare(a['開始時間'] || '');
+      return (b.startTime || '').localeCompare(a.startTime || '');
     })
     .slice(0, 200);
 
   const renderBookingRow = (b: any, i: number) => {
-    const isCanceled = typeof b['ステータス'] === 'string' && b['ステータス'].startsWith('CANCELED');
+    const isCanceled = typeof b.status === 'string' && b.status.startsWith('CANCELED');
     return (
       <tr key={i} style={{ borderBottom: '1px solid #333', opacity: isCanceled ? 0.5 : 1 }}>
         <td style={{ padding: '10px', textDecoration: isCanceled ? 'line-through' : 'none' }}>
-          {new Date(b['日付']).toLocaleDateString()} {b['開始時間']}
+          {new Date(b.date).toLocaleDateString()} {b.startTime}
         </td>
-        <td style={{ padding: '10px', textDecoration: isCanceled ? 'line-through' : 'none' }}>{b['スタジオ']}</td>
+        <td style={{ padding: '10px', textDecoration: isCanceled ? 'line-through' : 'none' }}>{b.studioId}</td>
         <td style={{ padding: '10px' }}>
-          <span style={{ textDecoration: isCanceled ? 'line-through' : 'none' }}>{(b['お名前'] || '').replace('【手動登録】', '')}</span> 
-          <span style={{ fontSize: '0.8rem', color: '#888', marginLeft: '5px' }}>({b['会員ナンバー']})</span>
+          <span style={{ textDecoration: isCanceled ? 'line-through' : 'none' }}>{(b.name || '').replace('【手動登録】', '')}</span> 
+          <span style={{ fontSize: '0.8rem', color: '#888', marginLeft: '5px' }}>({b.memberNo})</span>
           {isCanceled && (
             <span style={{ marginLeft: '10px', fontSize: '0.75rem', color: '#e53935', border: '1px solid #e53935', padding: '2px 4px', borderRadius: '4px' }}>取消済</span>
           )}
         </td>
         <td style={{ padding: '10px' }}>
-          <AdminBookingActions bookingId={b['予約ID']} currentStatus={b['ステータス']} />
+          <AdminBookingActions bookingId={b.bookingId} currentStatus={b.status} />
         </td>
       </tr>
     );
