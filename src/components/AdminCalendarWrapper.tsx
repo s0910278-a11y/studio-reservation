@@ -14,7 +14,7 @@ const generateWeekStartDates = (offset: number) => {
   return dates;
 };
 
-export default function AdminCalendarWrapper() {
+export default function AdminCalendarWrapper({ bookings }: { bookings?: any[] }) {
   const [loading, setLoading] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
@@ -44,7 +44,7 @@ export default function AdminCalendarWrapper() {
     setLoading(true);
 
     const payload = data.memberNo 
-      ? { memberNo: data.memberNo, name: data.name || '(ID登録)', phone: '(管理者代行入力)', email: '', studio: selectedSlot.studio, date: selectedSlot.dateStr, startTime: selectedSlot.time, peopleCount: 1, durationHours: data.durationHours || 1 }
+      ? { memberNo: data.memberNo, name: `(ID登録)`, phone: '(管理者代行入力)', email: '', studio: selectedSlot.studio, date: selectedSlot.dateStr, startTime: selectedSlot.time, peopleCount: 1, durationHours: data.durationHours || 1 }
       : { name: data.name, phone: data.phone || '(管理者代行入力)', email: data.email || 'admin@zero-emission.co.jp', memberNo: 'ADMIN', studio: selectedSlot.studio, date: selectedSlot.dateStr, startTime: selectedSlot.time, peopleCount: 1, durationHours: data.durationHours || 1 };
 
     try {
@@ -88,11 +88,11 @@ export default function AdminCalendarWrapper() {
       <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: '300px' }}>
           <div style={{ fontWeight: 'bold', fontSize: '1.2rem', color: 'var(--accent-blue)', marginBottom: '10px', textAlign: 'center' }}>Studio A</div>
-          <Calendar onSlotClick={handleAdminSlotClick} defaultStudio="Studio A" hideTabs={true} isAdmin={true} hideNav={true} hideLegend={true} weekOffsetOverride={weekOffset} selectedSlot={selectedSlot} />
+          <Calendar onSlotClick={handleAdminSlotClick} defaultStudio="Studio A" hideTabs={true} isAdmin={true} hideNav={true} hideLegend={true} weekOffsetOverride={weekOffset} selectedSlot={selectedSlot} initialData={bookings} />
         </div>
         <div style={{ flex: 1, minWidth: '300px' }}>
           <div style={{ fontWeight: 'bold', fontSize: '1.2rem', color: 'var(--accent-blue)', marginBottom: '10px', textAlign: 'center' }}>Studio B</div>
-          <Calendar onSlotClick={handleAdminSlotClick} defaultStudio="Studio B" hideTabs={true} isAdmin={true} hideNav={true} hideLegend={true} weekOffsetOverride={weekOffset} selectedSlot={selectedSlot} />
+          <Calendar onSlotClick={handleAdminSlotClick} defaultStudio="Studio B" hideTabs={true} isAdmin={true} hideNav={true} hideLegend={true} weekOffsetOverride={weekOffset} selectedSlot={selectedSlot} initialData={bookings} />
         </div>
       </div>
 

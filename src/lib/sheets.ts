@@ -17,7 +17,10 @@ const getGasUrl = () => {
 // 予約一覧の取得
 export const getBookingsFromSheet = async () => {
   const url = getGasUrl();
-  const res = await fetch(`${url}?action=getBookings`, { next: { revalidate: 0 } });
+  const res = await fetch(`${url}?action=getBookings`, { 
+    next: { revalidate: 0 },
+    signal: AbortSignal.timeout(8000) 
+  });
   if (!res.ok) throw new Error('Failed to fetch bookings from GAS');
   
   const json = await res.json();
@@ -29,7 +32,10 @@ export const getBookingsFromSheet = async () => {
 // 顧客リストの取得
 export const getUsersFromSheet = async () => {
   const url = getGasUrl();
-  const res = await fetch(`${url}?action=getUsers`, { next: { revalidate: 0 } });
+  const res = await fetch(`${url}?action=getUsers`, { 
+    next: { revalidate: 0 },
+    signal: AbortSignal.timeout(8000)
+  });
   if (!res.ok) throw new Error('Failed to fetch users from GAS');
   
   const json = await res.json();
@@ -44,7 +50,8 @@ export const createBookingInSheet = async (bookingData: any) => {
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain' }, // GAS expects plain text payload sometimes without CORS issues
-    body: JSON.stringify({ action: 'createBooking', data: bookingData })
+    body: JSON.stringify({ action: 'createBooking', data: bookingData }),
+    signal: AbortSignal.timeout(8000)
   });
   
   if (!res.ok) throw new Error('Failed to post booking to GAS');
@@ -61,7 +68,8 @@ export const createUserInSheet = async (userData: any) => {
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ action: 'createUser', data: userData })
+    body: JSON.stringify({ action: 'createUser', data: userData }),
+    signal: AbortSignal.timeout(8000)
   });
   
   if (!res.ok) throw new Error('Failed to post user to GAS');
@@ -75,7 +83,10 @@ export const createUserInSheet = async (userData: any) => {
 // 機材リストの取得
 export const getEquipmentFromSheet = async () => {
   const url = getGasUrl();
-  const res = await fetch(`${url}?action=getEquipment`, { next: { revalidate: 0 } });
+  const res = await fetch(`${url}?action=getEquipment`, { 
+    next: { revalidate: 0 },
+    signal: AbortSignal.timeout(8000)
+  });
   if (!res.ok) throw new Error('Failed to fetch equipment from GAS');
   
   const json = await res.json();

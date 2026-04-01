@@ -11,6 +11,7 @@ interface CalendarProps {
   weekOffsetOverride?: number;
   isDisplayMode?: boolean; // 外部モニター等表示専用モード
   selectedSlot?: { studio: string, dateStr: string, time: string } | null; // クリックされた枠の視覚維持用
+  initialData?: any[]; // 外部（管理者画面など）から渡される予約データ
 }
 
 // 予約可能期間: 当日から最大4週先まで
@@ -37,23 +38,25 @@ const generateWeek = () => {
 
 const DOW = ['(日)', '(月)', '(火)', '(水)', '(木)', '(金)', '(土)'];
 
-export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hideTabs = false, isAdmin = false, hideNav = false, hideLegend = false, weekOffsetOverride, isDisplayMode = false, selectedSlot }: CalendarProps) {
+export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hideTabs = false, isAdmin = false, hideNav = false, hideLegend = false, weekOffsetOverride, isDisplayMode = false, selectedSlot, initialData }: CalendarProps) {
   const [activeStudio, setActiveStudio] = useState<'Studio A' | 'Studio B'>(defaultStudio);
   const [internalWeekOffset, setInternalWeekOffset] = useState(0);
   const weekOffset = weekOffsetOverride !== undefined ? weekOffsetOverride : internalWeekOffset;
   const setWeekOffset = weekOffsetOverride !== undefined ? () => {} : setInternalWeekOffset;
-  const [bookedSlots, setBookedSlots] = useState<{ studioId: string, date: string, startTime: string, endTime: string, status?: string, name?: string, memberNo?: string }[]>([]);
+  const [internalBookedSlots, setInternalBookedSlots] = useState<{ studioId: string, date: string, startTime: string, endTime: string, status?: string, name?: string, memberNo?: string }[]>([]);
+  const bookedSlots = initialData || internalBookedSlots;
   const [hoveredCell, setHoveredCell] = useState<{ dateIdx: number, timeIdx: number } | null>(null);
 
   React.useEffect(() => {
     const loadBookings = () => {
+      if (initialData) return; // 外部からデータが供給されている場合はフェッチしない
       fetch(`/api/bookings${isAdmin ? '?admin=true' : ''}`)
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data)) {
-            setBookedSlots(data);
+            setInternalBookedSlots(data);
           } else if (data && Array.isArray(data.bookings)) {
-            setBookedSlots(data.bookings);
+            setInternalBookedSlots(data.bookings);
           }
         })
         .catch(console.error);
@@ -63,18 +66,18 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
     loadBookings();
     const interval = setInterval(loadBookings, 15000);
     return () => clearInterval(interval);
-  }, []);
+  }, [initialData, isAdmin]);
 
   // Helper to fetch the actual booking object for a slot
   const getBookingForSlot = (studioName: string, dateStr: string, timeStr: string) => {
-    const matched = bookedSlots.filter(b => {
+    const matched = bookedSlots.filter((b: any) => {
       return b.studioId === studioName && b.date.startsWith(dateStr) && b.startTime <= timeStr && timeStr < b.endTime;
     });
     if (matched.length === 0) return undefined;
-    const active = matched.find(b => b.status === 'ACTIVE');
+    const active = matched.find((b: any) => b.status === 'ACTIVE');
     if (active) return active;
     if (isAdmin) {
-      return matched.find(b => b.status && b.status.startsWith('CANCELED'));
+      return matched.find((b: any) => b.status && b.status.startsWith('CANCELED'));
     }
     return undefined;
   };
@@ -86,9 +89,6 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
 
   // Helper to check if a 1-hour block (2 slots) starting at timeIdx is available
   const canBook1HourFrom = (studioName: string, dateStr: string, timeIdx: number) => {
-    // 営業時間終了(19:00) を考慮
-    // 18:00 (index 14) 開始なら 19:00 終了で1時間可能。
-    // 18:30 (index 15) 開始なら 30分 しか確保できない。
     if (timeIdx >= TIME_SLOTS.length - 1) return false;
     const time1 = TIME_SLOTS[timeIdx];
     const time2 = TIME_SLOTS[timeIdx + 1];
@@ -97,11 +97,9 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
 
   const isCellHovered = (dateIdx: number, timeIdx: number) => {
     if (!hoveredCell) return false;
-    // 自分自身、または自分がホバーされたセルの真下（+1）であればホバー状態とする
     return hoveredCell.dateIdx === dateIdx && (hoveredCell.timeIdx === timeIdx || hoveredCell.timeIdx === timeIdx - 1);
   };
 
-  // Real logic would fetch bookings. Using empty grid for UI setup.
   const weekDates = generateWeek().map(d => {
     const adjusted = new Date(d);
     adjusted.setDate(d.getDate() + (weekOffset * 7));
@@ -117,7 +115,6 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
         </h3>
       )}
 
-      {/* Studio Tabs and Nav */}
       {!hideNav && (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
           
@@ -160,7 +157,6 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
         </div>
       )}
 
-      {/* Calendar Grid */}
       {!isAdmin && !isDisplayMode && (
         <div style={{ textAlign: 'center', fontSize: '0.8rem', color: '#888', marginBottom: '10px' }} className="mobile-scroll-hint">
           ← 横にスクロールして日付を確認できます →
@@ -188,7 +184,6 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
             </tr>
           </thead>
           <tbody>
-            {/* 11:00 開始境界用のスペーサー行 */}
             <tr>
                <td style={{ 
                   padding: 0, 
@@ -240,7 +235,6 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                   
                   const targetStudioStr = activeStudio === 'Studio A' ? 'Studio A' : 'Studio B';
                   
-                  // 当日15分前制御（お客様のみ、管理者は除外）
                   let isPastOrTooSoon = false;
                   if (!isAdmin) {
                     const now = new Date();
@@ -248,14 +242,13 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                     if (dateStr === todayStr) {
                       const [slotH, slotM] = time.split(':').map(Number);
                       const slotMins = slotH * 60 + slotM;
-                      const nowMins = now.getHours() * 60 + now.getMinutes() + 15; // 15分前制御
+                      const nowMins = now.getHours() * 60 + now.getMinutes() + 15;
                       if (slotMins <= nowMins) isPastOrTooSoon = true;
-                    } else if (dateStr < `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`) {
+                    } else if (dateStr < todayStr) {
                       isPastOrTooSoon = true;
                     }
                   }
 
-                  // This cell is occupied by an existing booking
                   const bookingObj = getBookingForSlot(targetStudioStr, dateStr, time);
                   const isOccupied = !!bookingObj && bookingObj.status === 'ACTIVE';
                   const isCanceledHistory = !!bookingObj && bookingObj.status?.startsWith('CANCELED');
@@ -277,9 +270,9 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                      const hours = durationMins / 60;
                      
                      if (isCanceledHistory) {
-                        bgColor = '#1e1e1e'; // 透過・無効感
+                        bgColor = '#1e1e1e';
                         opacity = 0.5;
-                        if (isAdmin) hoverTitle = `[キャンセル済] ${bookingObj.name || ''}`;
+                        if (isAdmin) hoverTitle = `[キャンセル済] ${(bookingObj.name || '').replace('【手動登録】', '')}`;
                         if (time === bookingObj.startTime) borderTopColor = '#333';
                      } else if (targetStudioStr === 'Studio A') {
                         bgColor = hours >= 3 ? '#1e3a8a' : (hours >= 2 ? '#1d4ed8' : '#3b82f6');
@@ -292,17 +285,15 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                      }
 
                      if (isAdmin && bookingObj.name && !isCanceledHistory) {
-                        hoverTitle = `${bookingObj.name}様 (${bookingObj.memberNo || 'GUEST'}) - ${hours}H`;
+                        hoverTitle = `${bookingObj.name.replace('【手動登録】', '')}様 (${bookingObj.memberNo || 'GUEST'}) - ${hours}H`;
                      }
                   }
                   
-                  // Interactive hover (if available) overrides cancel background if admin hovers onto a canceled spot
                   if (showAsActiveHover) {
                      bgColor = 'var(--accent-blue-hover)';
                      opacity = 1;
                   }
                   
-                  // Check if this slot was selected by the user
                   const isCurrentlySelected = selectedSlot && 
                     selectedSlot.studio === targetStudioStr && 
                     selectedSlot.dateStr === dateStr && 
@@ -323,7 +314,7 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                         borderBottom: '1px solid var(--border-color)', 
                         borderRight: '1px solid var(--border-color)',
                         borderTop: isOccupied && time === bookingObj?.startTime ? '2px solid #ffffff' : `1px solid ${borderTopColor}`,
-                        padding: 0 // tdのパディングを0にして中のdivをフルサイズに
+                        padding: 0
                       }}
                     >
                       <div
@@ -350,7 +341,6 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                           if (isInteractive) setHoveredCell(null);
                         }}
                         onClick={() => {
-                          if (isAdmin) console.log(`[Calendar Click] isAdmin: ${isAdmin}, studio: ${targetStudioStr}, date: ${dateStr}, time: ${time}`);
                           if (isInteractive && onSlotClick) {
                             onSlotClick(targetStudioStr, date, time);
                           } else if (isInteractive) {
@@ -358,11 +348,9 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                           }
                         }}
                       >
-                         {/* 管理者用：予約名の一部表示（オプション） */}
-                         {isAdmin && bookingObj && bookingObj.name && time === bookingObj.startTime && (
+                         {isAdmin && bookingObj && bookingObj.name && time === bookingObj.startTime && !isCanceledHistory && (
                            <span style={{ fontSize: '0.65rem', color: '#fff', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '90%' }}>
-                             {/* 予約が入っている場合（キャンセル済みの場合は名前を表示しない） */}
-                             {bookingObj.status?.startsWith('CANCELED') ? '' : (bookingObj.name || '').replace('【手動登録】', '').substring(0, 4) + '...'}
+                             {bookingObj.name.replace('【手動登録】', '').substring(0, 4)}...
                            </span>
                          )}
                       </div>
@@ -371,7 +359,6 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                 })}
               </tr>
             ))}
-            {/* 18:30 終端境界ラベル */}
             <tr>
                <td style={{ 
                   padding: 0, 
@@ -406,7 +393,6 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
         </table>
       </div>
 
-      {/* Legend */}
       {!hideLegend && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '15px', fontSize: '0.85rem', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
