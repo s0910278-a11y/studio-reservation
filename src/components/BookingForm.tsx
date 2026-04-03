@@ -206,15 +206,15 @@ export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
 
   if (success) {
     return (
-      <div style={{ textAlign: 'center', padding: '30px', backgroundColor: '#1a1a1a', borderRadius: '8px', border: '1px solid var(--accent-blue)', marginTop: '20px' }}>
+      <div style={{ textAlign: 'center', padding: '30px', backgroundColor: '#fff', borderRadius: '12px', border: '2px solid var(--accent-blue)', marginTop: '20px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
         <h3 style={{ color: 'var(--accent-blue)', marginBottom: '20px', fontSize: '1.5rem', fontWeight: 'bold' }}>✔ 予約が確定しました</h3>
-        <p style={{ color: '#ccc', marginBottom: '25px', lineHeight: '1.6' }}>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '25px', lineHeight: '1.6' }}>
           ご入力のメールアドレス宛に「ご予約完了メールおよびキャンセルURL」をお送りしました。
         </p>
 
-        <div style={{ backgroundColor: '#222', padding: '20px', borderRadius: '8px', display: 'inline-block', textAlign: 'left', marginBottom: '30px', border: '1px solid #333' }}>
-          <p style={{ margin: '0 0 10px 0', color: '#888', fontSize: '0.9rem' }}>あなたのご予約者番号（会員ナンバー）</p>
-          <p style={{ margin: '0', fontSize: '1.8rem', fontWeight: 'bold', color: 'white' }}>{issuedMemberNo || 'メールをご確認ください'}</p>
+        <div style={{ backgroundColor: '#f0f7ff', padding: '20px', borderRadius: '8px', display: 'inline-block', textAlign: 'left', marginBottom: '30px', border: '1px solid var(--accent-blue)' }}>
+          <p style={{ margin: '0 0 10px 0', color: '#666', fontSize: '0.9rem' }}>あなたのご予約者番号（会員ナンバー）</p>
+          <p style={{ margin: '0', fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--accent-blue)' }}>{issuedMemberNo || 'メールをご確認ください'}</p>
           <p style={{ margin: '10px 0 0 0', color: '#666', fontSize: '0.8rem' }}>次回予約時や来店時にこちらの番号をお伝えください。</p>
         </div>
 
@@ -249,8 +249,8 @@ export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
           onClick={() => setUserType('member')}
           style={{ 
             flex: 1, padding: '15px', textAlign: 'center', borderRadius: '8px', cursor: 'pointer', border: '2px solid',
-            borderColor: userType === 'member' ? 'var(--accent-blue)' : '#333',
-            backgroundColor: userType === 'member' ? 'rgba(0, 112, 243, 0.1)' : '#222'
+            borderColor: userType === 'member' ? 'var(--accent-blue)' : 'var(--border-color)',
+            backgroundColor: userType === 'member' ? 'rgba(0, 112, 243, 0.1)' : '#f5f5f5'
           }}>
           <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>会員番号から予約</div>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>次回以降スムーズに予約可能</div>
@@ -259,8 +259,8 @@ export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
           onClick={() => setUserType('new')}
           style={{ 
             flex: 1, padding: '15px', textAlign: 'center', borderRadius: '8px', cursor: 'pointer', border: '2px solid',
-            borderColor: userType === 'new' ? 'var(--accent-blue)' : '#333',
-            backgroundColor: userType === 'new' ? 'rgba(0, 112, 243, 0.1)' : '#222'
+            borderColor: userType === 'new' ? 'var(--accent-blue)' : 'var(--border-color)',
+            backgroundColor: userType === 'new' ? 'rgba(0, 112, 243, 0.1)' : '#f5f5f5'
           }}>
           <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>新規登録して予約</div>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>初めての方はこちら</div>
@@ -268,7 +268,7 @@ export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
       </div>
 
       {userType === 'member' ? (
-        <div className="panel" style={{ backgroundColor: '#1a1a1a', marginBottom: '25px', padding: '20px' }}>
+        <div className="panel" style={{ backgroundColor: '#ffffff', marginBottom: '25px', padding: '20px' }}>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label">会員ナンバー <span style={{color: 'var(--error-color)'}}>*</span></label>
             <input 
@@ -283,7 +283,7 @@ export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
           </div>
         </div>
       ) : (
-        <div className="panel" style={{ backgroundColor: '#1a1a1a', marginBottom: '25px', padding: '20px' }}>
+        <div className="panel" style={{ backgroundColor: '#ffffff', marginBottom: '25px', padding: '20px' }}>
           <div className="form-group">
             <label className="form-label">お名前 <span style={{color: 'var(--error-color)'}}>*</span></label>
             <input type="text" name="name" value={formData.name} onChange={handleChange} required={userType === 'new'} className="form-input" placeholder="例: 八王子 太郎" />
@@ -300,7 +300,7 @@ export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
                 ※ご予約完了後に確認メールおよびキャンセルリンクを送信します。<br/>
                 ※メールアドレスのスペル誤りがあるとメールが届きません。入力ミスがないか今一度ご確認ください。<br/>
               </p>
-              <p style={{ color: '#bbb', fontSize: '0.75rem', marginTop: '5px' }}>
+              <p style={{ color: '#666', fontSize: '0.75rem', marginTop: '5px' }}>
                 (メールが届かない場合は、迷惑メールフォルダもご確認ください)<br/>
                 ※予約完了後、次回以降に使える会員ナンバーが発行されます。
               </p>
@@ -383,12 +383,12 @@ export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
         />
       </div>
 
-      <div style={{ backgroundColor: '#2a2a2a', padding: '20px', borderRadius: '8px', marginTop: '20px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
-        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '5px' }}>
+      <div style={{ backgroundColor: '#eff6ff', padding: '20px', borderRadius: '12px', marginTop: '20px', textAlign: 'center', border: '1px solid var(--accent-blue)' }}>
+        <p style={{ fontSize: '0.9rem', color: '#555', marginBottom: '5px' }}>
           今回のご利用料金目安（{formData.studio} / {formData.peopleCount}名様 / {formData.durationHours}時間）
         </p>
-        <h3 style={{ fontSize: '1.8rem', color: '#fff', fontWeight: 'bold' }}>
-          ¥{(formData.peopleCount * 440 * formData.durationHours).toLocaleString()} <span style={{ fontSize: '1rem', fontWeight: 'normal' }}>(税込)</span>
+        <h3 style={{ fontSize: '1.8rem', color: 'var(--accent-blue)', fontWeight: 'bold' }}>
+          ¥{(formData.peopleCount * 440 * formData.durationHours).toLocaleString()} <span style={{ fontSize: '1rem', fontWeight: 'normal', color: '#555' }}>(税込)</span>
         </h3>
       </div>
 
@@ -400,7 +400,7 @@ export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
         </p>
       </div>
 
-      <div style={{ marginTop: '25px', display: 'flex', alignItems: 'flex-start', gap: '10px', backgroundColor: '#222', padding: '15px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+      <div style={{ marginTop: '25px', display: 'flex', alignItems: 'flex-start', gap: '10px', backgroundColor: '#fcfcfc', padding: '15px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
         <input 
           type="checkbox" 
           id="agreeTerms" 
@@ -449,14 +449,14 @@ export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
       {showTerms && (
         <div style={{ 
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
-          backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+          backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', 
           zIndex: 1000, padding: '20px' 
         }}>
           <div style={{ 
-            backgroundColor: '#1a1a1a', maxWidth: '650px', width: '100%', maxHeight: '90vh', 
-            borderRadius: '12px', display: 'flex', flexDirection: 'column', border: '1px solid #333', position: 'relative' 
+            backgroundColor: '#ffffff', maxWidth: '650px', width: '100%', maxHeight: '90vh', 
+            borderRadius: '12px', display: 'flex', flexDirection: 'column', border: '1px solid #ddd', position: 'relative' 
           }}>
-            <div style={{ padding: '20px 25px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1a1a1a', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
+            <div style={{ padding: '20px 25px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
               <h3 style={{ margin: 0, color: 'var(--accent-blue)' }}>スタジオ利用規約</h3>
               <button onClick={() => setShowTerms(false)} style={{ fontSize: '1.5rem', color: '#999', padding: '5px' }}>&times;</button>
             </div>
@@ -467,42 +467,42 @@ export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
                 const isBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 10; // 若干の余裕を持たせる
                 if (isBottom) setHasScrolledToBottom(true);
               }}
-              style={{ padding: '25px', fontSize: '0.95rem', lineHeight: '1.7', overflowY: 'auto', flex: 1, color: '#ddd' }}
+              style={{ padding: '25px', fontSize: '0.95rem', lineHeight: '1.7', overflowY: 'auto', flex: 1, color: '#333' }}
             >
               <div style={{ whiteSpace: 'pre-wrap' }}>
-                <p style={{ marginBottom: '20px', fontWeight: 'bold', color: '#fff', fontSize: '1.1rem', borderLeft: '4px solid var(--accent-blue)', paddingLeft: '10px' }}>
+                <p style={{ marginBottom: '20px', fontWeight: 'bold', color: '#1a1a1a', fontSize: '1.1rem', borderLeft: '4px solid var(--accent-blue)', paddingLeft: '10px' }}>
                   【スタジオ利用規約】
                 </p>
 
-                <p style={{ fontWeight: 'bold', color: '#fff', marginTop: '20px', marginBottom: '10px' }}>■ スタジオ利用料金について</p>
+                <p style={{ fontWeight: 'bold', color: '#1a1a1a', marginTop: '20px', marginBottom: '10px' }}>■ スタジオ利用料金について</p>
                 <div style={{ marginLeft: '10px', marginBottom: '20px' }}>
                   1名様：400円（＋税）/1時間<br/>
                   2名様：800円（＋税）/1時間<br/>
                   3名様：1,200円（＋税）/1時間<br/>
-                  <p style={{ fontSize: '0.85rem', color: '#aaa', marginTop: '5px' }}>※年齢を問わず、上記の金額となります。</p>
+                  <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '5px' }}>※年齢を問わず、上記の金額となります。</p>
                 </div>
 
-                <p style={{ fontWeight: 'bold', color: '#fff', marginTop: '20px', marginBottom: '10px' }}>■ スタジオ予約について</p>
+                <p style={{ fontWeight: 'bold', color: '#1a1a1a', marginTop: '20px', marginBottom: '10px' }}>■ スタジオ予約について</p>
                 <div style={{ marginLeft: '10px', marginBottom: '20px' }}>
                   1か月先までの予約を受け付けします。<br/>
                   ご利用時間 11:00～19:00まで<br/>
-                  <p style={{ fontSize: '0.85rem', color: '#aaa', marginTop: '5px' }}>※当日の利用や時間延長は、アプリの予約空き状況により可能です。</p>
+                  <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '5px' }}>※当日の利用や時間延長は、アプリの予約空き状況により可能です。</p>
                 </div>
 
-                <p style={{ fontWeight: 'bold', color: '#fff', marginTop: '20px', marginBottom: '10px' }}>■ ご利用のキャンセルについて</p>
+                <p style={{ fontWeight: 'bold', color: '#1a1a1a', marginTop: '20px', marginBottom: '10px' }}>■ ご利用のキャンセルについて</p>
                 <div style={{ marginLeft: '10px', marginBottom: '20px' }}>
                   キャンセル料金は原則発生いたしませんが、当日の利用時間の10分を過ぎてもご来店されない場合は、自動的にキャンセルとさせていただきます。<br/>
                   キャンセルを前提としての空予約は、ご遠慮願います。<br/>
-                  <p style={{ fontSize: '0.85rem', color: '#aaa', marginTop: '5px' }}>※同じお客様からの空予約が続く場合は、ご利用をお断りさせていただく場合がございますので、ご了承ください。</p>
+                  <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '5px' }}>※同じお客様からの空予約が続く場合は、ご利用をお断りさせていただく場合がございますので、ご了承ください。</p>
                 </div>
 
-                <p style={{ fontWeight: 'bold', color: '#fff', marginTop: '20px', marginBottom: '10px' }}>■ スタジオ機材について</p>
+                <p style={{ fontWeight: 'bold', color: '#1a1a1a', marginTop: '20px', marginBottom: '10px' }}>■ スタジオ機材について</p>
                 <div style={{ marginLeft: '10px', marginBottom: '20px' }}>
                   機材は修理などで予告なしに変更する場合がございます。<br/>
                   機材の不調や破損があった場合は、速やかにスタッフまでお知らせください。ご対応いたします。<br/>
                   <span style={{ color: 'var(--error-color)', fontSize: '0.85rem' }}>※スタジオご利用後にお伝えいただいても、その際のスタジオ利用料等はご返金できません。</span><br/><br/>
                   機材のお持ち込みは可能です。<br/>
-                  <p style={{ fontSize: '0.9rem', color: '#bbb', marginTop: '5px' }}>
+                  <p style={{ fontSize: '0.9rem', color: '#555', marginTop: '5px' }}>
                     ※当店指定のエレキギター、エレキベースは、300円（＋税）/1時間でお貸し出しします。<br/>
                     ※電子ピアノ（ライトタッチ）、ダイナミックマイク、マイクケーブル、ギターシールドは無料貸出しです。<br/>
                     ※その他（ドラムスティックやスマホからイヤホン端子への変換アダプター等）の貸出しはございません。<br/>
@@ -515,7 +515,7 @@ export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
                   </p>
                 </div>
 
-                <p style={{ fontWeight: 'bold', color: '#fff', marginTop: '20px', marginBottom: '10px' }}>■ お願い</p>
+                <p style={{ fontWeight: 'bold', color: '#1a1a1a', marginTop: '20px', marginBottom: '10px' }}>■ お願い</p>
                 <div style={{ marginLeft: '10px', marginBottom: '20px', fontSize: '0.9rem' }}>
                   <ul style={{ paddingLeft: '20px', listStyleType: 'disc' }}>
                     <li style={{ marginBottom: '8px' }}>セルフスタジオとなりますので、基本セッティングを変えられた方は、お客様ご自身で元にお戻しください。</li>
@@ -536,7 +536,7 @@ export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
                 </div>
               </div>
 
-              <div style={{ backgroundColor: '#222', padding: '15px', borderRadius: '8px', border: '1px solid #444', marginBottom: '10px', textAlign: 'center' }}>
+              <div style={{ backgroundColor: '#f0f9ff', padding: '15px', borderRadius: '8px', border: '1px solid var(--accent-blue)', marginBottom: '10px', textAlign: 'center' }}>
                 {!hasScrolledToBottom ? (
                   <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--accent-blue)', fontWeight: 'bold' }}>
                     ⬇ 規約を最後までスクロールして確認してください ⬇

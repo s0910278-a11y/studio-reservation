@@ -15,8 +15,10 @@ export default function Home() {
         textAlign: 'center'
       }}>
         <div className="container">
-          <h1 style={{ fontSize: '3.5rem', marginBottom: '15px', fontWeight: 'bold' }}>ハードオフ八王子大和田店<br/>楽器スタジオ予約</h1>
-          <p style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', marginBottom: '40px' }}>ハードオフ八王子大和田店 楽器スタジオ</p>
+          <h1 style={{ fontSize: '3.5rem', marginBottom: '30px', fontWeight: 'bold', lineHeight: '1.2' }}>
+            ハードオフ八王子大和田店<br/>
+            楽器スタジオ
+          </h1>
           <a href="#booking" className="btn-primary" style={{ display: 'inline-block', maxWidth: '300px' }}>
             <span style={{ marginRight: '8px' }}>📅</span>予約・空き状況
           </a>
