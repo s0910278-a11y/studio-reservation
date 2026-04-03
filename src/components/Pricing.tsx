@@ -62,7 +62,6 @@ export default function Pricing() {
 
       <div style={{ marginTop: '30px', backgroundColor: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', padding: '20px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
         <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <li style={{ color: 'var(--accent-blue)' }}>会員証は無料で発行いたします。</li>
           <li style={{ color: 'var(--accent-blue)' }}>予約は1ヶ月先まで可能です。</li>
         </ul>
       </div>
