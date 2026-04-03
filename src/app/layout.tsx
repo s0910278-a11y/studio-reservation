@@ -3,9 +3,36 @@ import "./globals.css";
 import ClientGlobalHeader from "../components/ClientGlobalHeader";
 import ClientGlobalFooter from "../components/ClientGlobalFooter";
 
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://zeroemission-reserve.netlify.app';
+
 export const metadata: Metadata = {
-  title: "ハードオフ八王子大和田店 楽器スタジオ予約",
-  description: "八王子で最高の音を。ハードオフ八王子大和田店楽器スタジオの予約サイトです。",
+  metadataBase: new URL(baseUrl),
+  title: {
+    default: "ハードオフ八王子大和田店 楽器スタジオ予約",
+    template: "%s | ハードオフ八王子大和田店 楽器スタジオ"
+  },
+  description: "八王子で最高の音を。ハードオフ八王子大和田店楽器スタジオの公式予約サイトです。24時間ネット予約受付中。",
+  keywords: ["ハードオフ", "八王子", "大和田", "スタジオ", "楽器スタジオ", "スタジオ予約", "練習スタジオ"],
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: "ハードオフ八王子大和田店 楽器スタジオ予約",
+    description: "八王子で最高の音を。公式予約サイトから今すぐ空き状況をチェック。",
+    url: baseUrl,
+    siteName: "ハードオフ八王子大和田店 楽器スタジオ",
+    locale: "ja_JP",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ハードオフ八王子大和田店 楽器スタジオ予約",
+    description: "八王子で最高の音を。公式予約サイトから今すぐ空き状況をチェック。",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  }
 };
 
 export default function RootLayout({
