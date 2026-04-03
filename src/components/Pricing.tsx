@@ -56,11 +56,11 @@ export default function Pricing() {
 
         <div style={{ marginTop: '20px', textAlign: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '20px', width: '100%' }}>
           <span style={{ fontSize: '1.2rem', color: 'var(--text-secondary)' }}>合計料金: </span>
-          <span style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'white' }}>¥{totalPrice.toLocaleString()}</span>
+          <span style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>¥{totalPrice.toLocaleString()}</span>
         </div>
       </div>
 
-      <div style={{ marginTop: '30px', backgroundColor: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', padding: '20px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+      <div style={{ marginTop: '30px', backgroundColor: '#fcfcfc', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '20px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
         <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <li style={{ color: 'var(--accent-blue)' }}>予約は1ヶ月先まで可能です。</li>
         </ul>

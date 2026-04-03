@@ -8,19 +8,19 @@ export default function Home() {
     <>
       {/* Hero Section */}
       <section style={{ 
-        backgroundImage: 'linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.7)), url("/hero-bg-v4.jpg")', 
+        backgroundImage: 'linear-gradient(rgba(255,255,255,0.7), rgba(255,255,255,0.8)), url("/hero-bg-v4.jpg")', 
         backgroundSize: 'cover',
         backgroundPosition: 'center center',
         padding: '120px 20px',
         textAlign: 'center'
       }}>
         <div className="container">
-          <h1 style={{ fontSize: '3.5rem', marginBottom: '15px', fontWeight: 'bold' }}>八王子で、<br/>最高の音を。</h1>
-          <p style={{ fontSize: '1.2rem', color: '#e0e0e0', marginBottom: '40px' }}>ハードオフ八王子大和田店 楽器スタジオ</p>
+          <h1 style={{ fontSize: '3.5rem', marginBottom: '15px', fontWeight: 'bold' }}>ハードオフ八王子大和田店<br/>楽器スタジオ予約</h1>
+          <p style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', marginBottom: '40px' }}>ハードオフ八王子大和田店 楽器スタジオ</p>
           <a href="#booking" className="btn-primary" style={{ display: 'inline-block', maxWidth: '300px' }}>
             <span style={{ marginRight: '8px' }}>📅</span>予約・空き状況
           </a>
-          <p style={{ marginTop: '20px', fontSize: '1rem', color: '#ccc' }}>ネット予約 受付中（即時確定）</p>
+          <p style={{ marginTop: '20px', fontSize: '1rem', color: '#666' }}>ネット予約 受付中（即時確定）</p>
         </div>
       </section>
 
@@ -36,7 +36,7 @@ export default function Home() {
       </section>
 
       {/* Pricing Section */}
-      <section id="price" className="section" style={{ backgroundColor: '#111' }}>
+      <section id="price" className="section" style={{ backgroundColor: '#f9f9f9' }}>
         <div className="container">
           <h2 className="section-title">ご利用料金</h2>
           <Pricing />
@@ -44,7 +44,7 @@ export default function Home() {
       </section>
 
       {/* Equipment List Section */}
-      <section id="equipment" className="section" style={{ backgroundColor: '#151515' }}>
+      <section id="equipment" className="section" style={{ backgroundColor: '#ffffff' }}>
         <div className="container">
           <h2 className="section-title">機材リスト</h2>
           <Equipment />
@@ -52,7 +52,7 @@ export default function Home() {
       </section>
 
       {/* Access Section */}
-      <section id="access" className="section" style={{ backgroundColor: '#0a0a0a' }}>
+      <section id="access" className="section" style={{ backgroundColor: '#f5f5f5' }}>
         <div className="container" style={{ textAlign: 'center' }}>
           <h2 className="section-title">アクセス</h2>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '30px', fontSize: '1.1rem' }}>ハードオフ八王子大和田店 楽器スタジオ</p>

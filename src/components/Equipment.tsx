@@ -113,7 +113,7 @@ export default function Equipment() {
               {sec.items.map((item, itemIdx) => (
                 <li key={itemIdx} style={{ 
                   padding: '10px 0', 
-                  borderBottom: itemIdx === sec.items.length - 1 ? 'none' : '1px solid #333',
+                  borderBottom: itemIdx === sec.items.length - 1 ? 'none' : '1px solid var(--border-color)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center'
@@ -123,9 +123,10 @@ export default function Equipment() {
                     <span style={{ 
                       fontSize: '0.75rem', 
                       color: 'var(--text-secondary)',
-                      backgroundColor: '#2a2a2a',
+                      backgroundColor: '#f5f5f5',
                       padding: '2px 8px',
-                      borderRadius: '4px'
+                      borderRadius: '4px',
+                      border: '1px solid #eee'
                     }}>
                       {item.subCategory}
                     </span>

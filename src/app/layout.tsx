@@ -11,14 +11,14 @@ export const metadata: Metadata = {
     default: "ハードオフ八王子大和田店 楽器スタジオ予約",
     template: "%s | ハードオフ八王子大和田店 楽器スタジオ"
   },
-  description: "八王子で最高の音を。ハードオフ八王子大和田店楽器スタジオの公式予約サイトです。24時間ネット予約受付中。",
+  description: "ハードオフ八王子大和田店楽器スタジオの公式予約サイトです。24時間ネット予約受付中。",
   keywords: ["ハードオフ", "八王子", "大和田", "スタジオ", "楽器スタジオ", "スタジオ予約", "練習スタジオ"],
   alternates: {
     canonical: '/',
   },
   openGraph: {
     title: "ハードオフ八王子大和田店 楽器スタジオ予約",
-    description: "八王子で最高の音を。公式予約サイトから今すぐ空き状況をチェック。",
+    description: "公式予約サイトから今すぐ空き状況をチェック。",
     url: baseUrl,
     siteName: "ハードオフ八王子大和田店 楽器スタジオ",
     locale: "ja_JP",
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "ハードオフ八王子大和田店 楽器スタジオ予約",
-    description: "八王子で最高の音を。公式予約サイトから今すぐ空き状況をチェック。",
+    description: "公式予約サイトから今すぐ空き状況をチェック。",
   },
   robots: {
     index: true,

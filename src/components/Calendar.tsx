@@ -170,13 +170,10 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                 padding: isDisplayMode ? '5px' : '10px 15px', 
                 borderBottom: '1px solid var(--border-color)', 
                 borderRight: '1px solid var(--border-color)', 
-                backgroundColor: '#222',
-                position: 'sticky',
-                left: 0,
-                zIndex: 10
-              }}></th>
+                  backgroundColor: 'var(--background-panel)',
+                }}></th>
               {weekDates.map((date, idx) => (
-                <th key={idx} suppressHydrationWarning style={{ padding: isDisplayMode ? '5px' : '10px 15px', borderBottom: '1px solid var(--border-color)', borderRight: '1px solid var(--border-color)', backgroundColor: '#222', width: '12%' }}>
+                <th key={idx} suppressHydrationWarning style={{ padding: isDisplayMode ? '5px' : '10px 15px', borderBottom: '1px solid var(--border-color)', borderRight: '1px solid var(--border-color)', backgroundColor: 'var(--background-panel)', width: '12%' }}>
                   <div suppressHydrationWarning style={{ fontSize: isDisplayMode ? '0.8rem' : '0.9rem' }}>{date.getMonth()+1}/{date.getDate()}</div>
                   <div suppressHydrationWarning style={{ fontSize: isDisplayMode ? '0.7rem' : '0.8rem', color: 'var(--text-secondary)' }}>{DOW[date.getDay()]}</div>
                 </th>
@@ -189,7 +186,7 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                   padding: 0, 
                   height: isDisplayMode ? '20px' : '16px', 
                   borderRight: '1px solid var(--border-color)', 
-                  backgroundColor: '#222', 
+                  backgroundColor: 'var(--background-panel)', 
                   position: 'sticky',
                   left: 0,
                   zIndex: 5
@@ -205,8 +202,8 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                   height: isDisplayMode ? '45px' : '32px', 
                   borderRight: '1px solid var(--border-color)', 
                   borderBottom: '1px solid var(--border-color)',
-                  color: 'var(--text-secondary)', 
-                  backgroundColor: '#222',
+                  color: '#666', 
+                  backgroundColor: 'var(--background-panel)',
                   position: 'sticky',
                   left: 0,
                   width: isDisplayMode ? '80px' : '65px',
@@ -217,7 +214,7 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                     top: 0,
                     right: '8px',
                     transform: 'translateY(-50%)',
-                    backgroundColor: '#222',
+                    backgroundColor: 'var(--background-panel)',
                     padding: '0 4px',
                     lineHeight: '1',
                     fontSize: isDisplayMode ? '1.1rem' : '0.9rem',
@@ -260,7 +257,7 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                   const isHoveredFromAbove = idx > 0 && isCellHovered(colIdx, idx) && canBook1HourFrom(targetStudioStr, dateStr, idx - 1);
                   const showAsActiveHover = isHighlighted || isHoveredFromAbove;
 
-                  let bgColor = '#1a1a1a';
+                  let bgColor = '#ffffff';
                   let borderTopColor = 'var(--border-color)';
                   let hoverTitle = '';
                   let opacity = 1;
@@ -270,14 +267,14 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                      const hours = durationMins / 60;
                      
                      if (isCanceledHistory) {
-                        bgColor = '#1e1e1e';
+                        bgColor = '#f5f5f5';
                         opacity = 0.5;
                         if (isAdmin) hoverTitle = `[キャンセル済] ${(bookingObj.name || '').replace('【手動登録】', '')}`;
-                        if (time === bookingObj.startTime) borderTopColor = '#333';
+                        if (time === bookingObj.startTime) borderTopColor = '#ddd';
                      } else if (targetStudioStr === 'Studio A') {
-                        bgColor = hours >= 3 ? '#1e3a8a' : (hours >= 2 ? '#1d4ed8' : '#3b82f6');
+                        bgColor = hours >= 3 ? '#1e40af' : (hours >= 2 ? '#2563eb' : '#3b82f6');
                      } else {
-                        bgColor = hours >= 3 ? '#312e81' : (hours >= 2 ? '#4338ca' : '#6366f1');
+                        bgColor = hours >= 3 ? '#3730a3' : (hours >= 2 ? '#4f46e5' : '#6366f1');
                      }
 
                      if (isOccupied && time === bookingObj.startTime) {
@@ -290,7 +287,7 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                   }
                   
                   if (showAsActiveHover) {
-                     bgColor = 'var(--accent-blue-hover)';
+                     bgColor = '#e6f3ff';
                      opacity = 1;
                   }
                   
@@ -299,11 +296,11 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                     selectedSlot.dateStr === dateStr && 
                     (selectedSlot.time === time || selectedSlot.time === TIME_SLOTS[idx - 1]);
 
-                  let boxShadowCSS = isOccupied && time === bookingObj?.startTime ? 'inset 0 2px 4px rgba(0,0,0,0.3)' : 'none';
+                  let boxShadowCSS = isOccupied && time === bookingObj?.startTime ? 'inset 0 2px 4px rgba(0,0,0,0.1)' : 'none';
                   
                   if (isCurrentlySelected) {
-                     boxShadowCSS = 'inset 0 0 0 2px #ffc107, 0 0 10px rgba(255,193,7,0.5)';
-                     bgColor = 'var(--accent-blue-hover)';
+                     boxShadowCSS = 'inset 0 0 0 2px #ffc107, 0 0 10px rgba(255,193,7,0.3)';
+                     bgColor = '#fff9e6';
                   }
 
                   return (
@@ -344,7 +341,8 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                           if (isInteractive && onSlotClick) {
                             onSlotClick(targetStudioStr, date, time);
                           } else if (isInteractive) {
-                            window.location.assign('#booking-form');
+                            const el = document.getElementById('booking-form');
+                            if (el) el.scrollIntoView({ behavior: 'smooth' });
                           }
                         }}
                       >
@@ -365,7 +363,7 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                   height: isDisplayMode ? '20px' : '16px', 
                   borderRight: '1px solid var(--border-color)', 
                   color: 'var(--text-secondary)', 
-                  backgroundColor: '#222', 
+                  backgroundColor: 'var(--background-panel)', 
                   position: 'sticky',
                   left: 0,
                   zIndex: 5
@@ -375,7 +373,7 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                     top: 0,
                     right: '8px',
                     transform: 'translateY(-50%)',
-                    backgroundColor: '#222',
+                    backgroundColor: 'var(--background-panel)',
                     padding: '0 4px',
                     lineHeight: '1',
                     fontSize: isDisplayMode ? '1.1rem' : '0.9rem',
@@ -394,9 +392,9 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
       </div>
 
       {!hideLegend && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '15px', fontSize: '0.85rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '20px', fontSize: '0.85rem', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <div style={{ width: '12px', height: '12px', backgroundColor: '#1a1a1a', border: '1px solid #555', borderRadius: '2px' }}></div>
+            <div style={{ width: '12px', height: '12px', backgroundColor: '#ffffff', border: '1px solid var(--border-color)', borderRadius: '2px' }}></div>
             <span>空き枠（予約可）</span>
           </div>
           {activeStudio === 'Studio A' && (
