@@ -236,6 +236,9 @@ export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
         <span style={{ backgroundColor: 'var(--accent-blue)', color: 'white', padding: '4px 10px', borderRadius: '4px', marginRight: '10px', fontSize: '0.9rem' }}>STEP 2</span>
         お客様情報と予約内容の入力
       </h3>
+      <p style={{ fontSize: '0.85rem', color: 'var(--accent-blue)', marginBottom: '20px', fontWeight: 'bold' }}>
+        ※予約は1ヶ月先まで可能です。
+      </p>
 
       {errorMsg && (
         <div style={{ backgroundColor: 'rgba(229, 57, 53, 0.2)', color: '#e53935', padding: '15px', borderRadius: '8px', marginBottom: '20px', fontWeight: 'bold' }}>

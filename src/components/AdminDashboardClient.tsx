@@ -106,6 +106,25 @@ export default function AdminDashboardClient() {
       return (b.startTime || '').localeCompare(a.startTime || '');
     })
     .slice(0, 200);
+  
+  // 売上計算ヘルパー: (終了時間 - 開始時間) * 人数 * 440円
+  const calculateBookingRevenue = (b: any) => {
+    if (!b.startTime || !b.endTime || !b.peopleCount) return 0;
+    const isCanceled = typeof b.status === 'string' && b.status.startsWith('CANCELED');
+    if (isCanceled) return 0;
+
+    try {
+      const [startH, startM] = b.startTime.split(':').map(Number);
+      const [endH, endM] = b.endTime.split(':').map(Number);
+      const durationHours = (endH * 60 + endM - (startH * 60 + startM)) / 60;
+      const people = Number(b.peopleCount) || 1;
+      return Math.round(people * 440 * durationHours);
+    } catch (e) {
+      return 0;
+    }
+  };
+
+  const totalMonthlyRevenue = pastBookings.reduce((sum, b) => sum + calculateBookingRevenue(b), 0);
 
   const renderBookingRow = (b: any, i: number) => {
     const isCanceled = typeof b.status === 'string' && b.status.startsWith('CANCELED');
@@ -168,8 +187,13 @@ export default function AdminDashboardClient() {
           </div>
 
           <div className="panel" style={{ borderLeft: '4px solid #ddd', backgroundColor: '#fafafa' }}>
-            <h3 style={{ color: '#666', display: 'flex', alignItems: 'center' }}>
-              <span style={{ fontSize: '1.2rem', marginRight: '8px' }}>📋</span> 終了分（当月の履歴）
+            <h3 style={{ color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ display: 'flex', alignItems: 'center' }}>
+                <span style={{ fontSize: '1.2rem', marginRight: '8px' }}>📋</span> 終了分（当月の履歴）
+              </span>
+              <span style={{ fontSize: '0.9rem', backgroundColor: '#e3f2fd', color: 'var(--accent-blue)', padding: '5px 12px', borderRadius: '20px', fontWeight: 'bold' }}>
+                今月の売上額: ¥{totalMonthlyRevenue.toLocaleString()}
+              </span>
             </h3>
             <p style={{ fontSize: '0.8rem', color: '#888', marginBottom: '10px' }}>※前日までの完了済み予約が表示されます。月が変わるとリセットされます。</p>
             <div style={{ maxHeight: '400px', overflowY: 'auto', marginTop: '10px', paddingRight: '10px', borderTop: '1px solid #eee', borderBottom: '1px solid #eee' }}>
