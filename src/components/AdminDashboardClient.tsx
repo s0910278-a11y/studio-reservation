@@ -191,7 +191,7 @@ export default function AdminDashboardClient() {
                       return (
                         <tr key={i} style={{ borderBottom: '1px solid #eee' }}>
                           <td style={{ padding: '8px 10px', fontSize: '0.9rem', textDecoration: isCanceled ? 'line-through' : 'none', color: '#666' }}>
-                            {new Date(b.date).toLocaleDateString()} {b.startTime}
+                            {b.date ? new Date(b.date).toLocaleDateString() : '---'} {b.startTime}
                           </td>
                           <td style={{ padding: '8px 10px', fontSize: '0.9rem', textDecoration: isCanceled ? 'line-through' : 'none', color: '#666' }}>{b.studioId}</td>
                           <td style={{ padding: '8px 10px', fontSize: '0.9rem', color: '#666' }}>
