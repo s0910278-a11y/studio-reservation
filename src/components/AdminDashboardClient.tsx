@@ -192,7 +192,7 @@ export default function AdminDashboardClient() {
                 <span style={{ fontSize: '1.2rem', marginRight: '8px' }}>📋</span> 終了分（当月の履歴）
               </span>
               <span style={{ fontSize: '0.9rem', backgroundColor: '#e3f2fd', color: 'var(--accent-blue)', padding: '5px 12px', borderRadius: '20px', fontWeight: 'bold' }}>
-                今月の売上額: ¥{totalMonthlyRevenue.toLocaleString()}
+                今月の売上額 (税込): ¥{totalMonthlyRevenue.toLocaleString()}
               </span>
             </h3>
             <p style={{ fontSize: '0.8rem', color: '#888', marginBottom: '10px' }}>※前日までの完了済み予約が表示されます。月が変わるとリセットされます。</p>
