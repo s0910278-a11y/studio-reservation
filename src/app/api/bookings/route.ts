@@ -23,7 +23,7 @@ export async function GET(request: Request) {
           status: b['ステータス']
         };
         if (isAdmin) {
-          return { ...base, name: b['お名前'], memberNo: b['会員ナンバー'] };
+          return { ...base, name: b['お名前'], memberNo: b['会員ナンバー'], peopleCount: b['利用人数'] };
         }
         return base;
       });

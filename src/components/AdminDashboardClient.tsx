@@ -110,7 +110,7 @@ export default function AdminDashboardClient() {
   const renderBookingRow = (b: any, i: number) => {
     const isCanceled = typeof b.status === 'string' && b.status.startsWith('CANCELED');
     return (
-      <tr key={i} style={{ borderBottom: '1px solid #eee', opacity: isCanceled ? 0.5 : 1 }}>
+      <tr key={i} title={isCanceled ? `キャンセル済み` : `${(b.name || '').replace('【手動登録】', '')}様 (${b.peopleCount || '?'}名)`} style={{ borderBottom: '1px solid #eee', opacity: isCanceled ? 0.5 : 1 }}>
         <td style={{ padding: '10px', textDecoration: isCanceled ? 'line-through' : 'none' }}>
           {new Date(b.date).toLocaleDateString()} {b.startTime}
         </td>

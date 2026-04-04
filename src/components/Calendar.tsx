@@ -282,7 +282,7 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
                      }
 
                      if (isAdmin && bookingObj.name && !isCanceledHistory) {
-                        hoverTitle = `${bookingObj.name.replace('【手動登録】', '')}様 (${bookingObj.memberNo || 'GUEST'}) - ${hours}H`;
+                        hoverTitle = `${bookingObj.name.replace('【手動登録】', '')}様 (${bookingObj.memberNo || 'GUEST'}) - ${hours}H / ${bookingObj.peopleCount || '?'}名`;
                      }
                   }
                   

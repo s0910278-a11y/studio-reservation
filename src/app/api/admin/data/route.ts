@@ -20,7 +20,8 @@ export async function GET() {
         endTime: b['終了時間'],
         status: b['ステータス'],
         name: b['お名前'],
-        memberNo: b['会員ナンバー']
+        memberNo: b['会員ナンバー'],
+        peopleCount: b['利用人数']
       };
     });
 
