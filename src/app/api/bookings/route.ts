@@ -14,10 +14,16 @@ export async function GET(request: Request) {
     const bookings = sheetData
       .filter((b: any) => b['ステータス'] === 'ACTIVE' || (isAdmin && b['ステータス'] === 'CANCELED'))
       .map((b: any) => {
+        let isoDate = "";
+        try {
+          const d = new Date(b['日付']);
+          if (!isNaN(d.getTime())) isoDate = d.toISOString();
+        } catch(e) {}
+
         const base = {
           bookingId: b['予約ID'],
           studioId: b['スタジオ'],
-          date: new Date(b['日付']).toISOString(),
+          date: isoDate,
           startTime: b['開始時間'],
           endTime: b['終了時間'],
           status: b['ステータス']

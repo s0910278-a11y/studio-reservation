@@ -187,22 +187,22 @@ export default function AdminDashboardClient() {
                     <tr><td colSpan={4} style={{ padding: '20px', textAlign: 'center', color: '#999' }}>当月の終了済み予約はありません</td></tr>
                   ) : (
                     pastBookings.map((b: any, i: number) => {
-                      const isCanceled = typeof b['ステータス'] === 'string' && b['ステータス'].startsWith('CANCELED');
+                      const isCanceled = typeof b.status === 'string' && b.status.startsWith('CANCELED');
                       return (
-                        <tr key={i} style={{ borderBottom: '1px solid #eee', opacity: 0.7 }}>
+                        <tr key={i} style={{ borderBottom: '1px solid #eee' }}>
                           <td style={{ padding: '8px 10px', fontSize: '0.9rem', textDecoration: isCanceled ? 'line-through' : 'none', color: '#666' }}>
-                            {new Date(b['日付']).toLocaleDateString()} {b['開始時間']}
+                            {new Date(b.date).toLocaleDateString()} {b.startTime}
                           </td>
-                          <td style={{ padding: '8px 10px', fontSize: '0.9rem', textDecoration: isCanceled ? 'line-through' : 'none', color: '#666' }}>{b['スタジオ']}</td>
+                          <td style={{ padding: '8px 10px', fontSize: '0.9rem', textDecoration: isCanceled ? 'line-through' : 'none', color: '#666' }}>{b.studioId}</td>
                           <td style={{ padding: '8px 10px', fontSize: '0.9rem', color: '#666' }}>
-                            <span style={{ textDecoration: isCanceled ? 'line-through' : 'none' }}>{b['お名前']}</span>
+                            <span style={{ textDecoration: isCanceled ? 'line-through' : 'none' }}>{b.name || '(名称未設定)'}</span>
                             {isCanceled && (
                               <span style={{ marginLeft: '5px', fontSize: '0.7rem', color: '#999' }}>(取消済)</span>
                             )}
                           </td>
                           <td style={{ padding: '8px 10px' }}>
                              <span style={{ fontSize: '0.75rem', color: '#888', border: '1px solid #ddd', padding: '2px 4px', borderRadius: '4px' }}>
-                                {b['ステータス'] === 'COMPLETED' ? '完了' : (isCanceled ? '終了' : '履歴')}
+                                {b.status === 'COMPLETED' ? '完了' : (isCanceled ? '終了' : '履歴')}
                              </span>
                           </td>
                         </tr>

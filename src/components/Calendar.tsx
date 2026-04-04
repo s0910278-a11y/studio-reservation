@@ -394,7 +394,7 @@ export default function Calendar({ onSlotClick, defaultStudio = 'Studio A', hide
       {!hideLegend && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '20px', fontSize: '0.85rem', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <div style={{ width: '12px', height: '12px', backgroundColor: '#ffffff', border: '1px solid var(--border-color)', borderRadius: '2px' }}></div>
+            <div style={{ width: '12px', height: '12px', backgroundColor: '#ffffff', border: '1px solid #999', borderRadius: '2px' }}></div>
             <span>空き枠（予約可）</span>
           </div>
           {activeStudio === 'Studio A' && (

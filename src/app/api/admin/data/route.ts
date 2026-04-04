@@ -12,10 +12,16 @@ export async function GET() {
 
     // Calendarコンポーネントやフロントエンドが期待する形式に変換（/api/bookings/route.ts と同様の処理）
     const mappedBookings = (sheetData || []).map((b: any) => {
+      let isoDate = "";
+      try {
+        const d = new Date(b['日付']);
+        if (!isNaN(d.getTime())) isoDate = d.toISOString();
+      } catch(e) {}
+
       return {
         bookingId: b['予約ID'],
         studioId: b['スタジオ'],
-        date: new Date(b['日付']).toISOString(),
+        date: isoDate,
         startTime: b['開始時間'],
         endTime: b['終了時間'],
         status: b['ステータス'],

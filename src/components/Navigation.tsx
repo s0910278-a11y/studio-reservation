@@ -9,7 +9,7 @@ export default function Navigation() {
   if (isAdmin) {
     return (
       <nav style={{ display: "flex", gap: "10px", alignItems: 'center' }}>
-        <a href="/" target="_blank" className="btn-outline" style={{ padding: '6px 12px', fontSize: '0.9rem', color: '#fff', textDecoration: 'none', border: '1px solid #555', whiteSpace: 'nowrap' }}>
+        <a href="/" target="_blank" className="btn-outline" style={{ padding: '6px 14px', fontSize: '0.9rem', color: 'var(--text-primary)', textDecoration: 'none', borderColor: 'var(--border-color)', backgroundColor: '#fcfcfc', whiteSpace: 'nowrap', fontWeight: 'bold' }}>
           ↗ お客様画面起動
         </a>
         <a href="/display" target="_blank" className="btn-primary" style={{ padding: '6px 12px', fontSize: '0.9rem', color: '#fff', textDecoration: 'none', backgroundColor: '#3b82f6', border: 'none', whiteSpace: 'nowrap' }}>

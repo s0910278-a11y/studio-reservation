@@ -46,7 +46,7 @@ export default function DisplayPage() {
       {/* Shared Legend at bottom */}
       <div style={{ marginTop: '10px', marginBottom: '8px', display: 'flex', justifyContent: 'center', gap: '40px', fontSize: '1.1rem', fontWeight: 'bold', backgroundColor: '#f8f9fa', padding: '10px 30px', borderRadius: '12px', border: '1px solid #eee', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '20px', height: '20px', backgroundColor: '#ffffff', border: '1px solid #ddd', borderRadius: '4px' }}></div>
+          <div style={{ width: '20px', height: '20px', backgroundColor: '#ffffff', border: '2px solid #ccc', borderRadius: '4px' }}></div>
           <span>空き枠 (予約可)</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

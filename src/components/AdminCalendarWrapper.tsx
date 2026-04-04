@@ -99,7 +99,7 @@ export default function AdminCalendarWrapper({ bookings }: { bookings?: any[] })
       {/* Shared Legend */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '30px', fontSize: '0.85rem', flexWrap: 'wrap', backgroundColor: 'var(--background-panel)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '16px', height: '16px', backgroundColor: '#ffffff', border: '1px solid var(--border-color)', borderRadius: '3px' }}></div>
+          <div style={{ width: '16px', height: '16px', backgroundColor: '#ffffff', border: '1px solid #999', borderRadius: '3px' }}></div>
           <span style={{ color: 'var(--text-secondary)' }}>空き枠（予約可）</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
