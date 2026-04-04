@@ -97,18 +97,18 @@ export default function AdminCalendarWrapper({ bookings }: { bookings?: any[] })
       </div>
 
       {/* Shared Legend */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '30px', fontSize: '0.9rem', flexWrap: 'wrap', backgroundColor: '#1a1a1a', padding: '15px', borderRadius: '8px' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '30px', fontSize: '0.85rem', flexWrap: 'wrap', backgroundColor: 'var(--background-panel)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '16px', height: '16px', backgroundColor: '#1a1a1a', border: '1px solid #555', borderRadius: '3px' }}></div>
-          <span>空き枠（予約可）</span>
+          <div style={{ width: '16px', height: '16px', backgroundColor: '#ffffff', border: '1px solid var(--border-color)', borderRadius: '3px' }}></div>
+          <span style={{ color: 'var(--text-secondary)' }}>空き枠（予約可）</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ width: '16px', height: '16px', backgroundColor: '#3b82f6', borderRadius: '3px' }}></div>
-          <span>予約済（Studio A）</span>
+          <span style={{ color: 'var(--text-secondary)' }}>予約済（Studio A）</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ width: '16px', height: '16px', backgroundColor: '#6366f1', borderRadius: '3px' }}></div>
-          <span>予約済（Studio B）</span>
+          <span style={{ color: 'var(--text-secondary)' }}>予約済（Studio B）</span>
         </div>
       </div>
 

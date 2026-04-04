@@ -37,23 +37,41 @@ export default function AdminBookingModal({ isOpen, onClose, onSubmit, studio, d
   };
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div style={{ backgroundColor: '#222', borderRadius: '12px', padding: '30px', width: '100%', maxWidth: '500px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
-        <h3 style={{ marginBottom: '5px', fontSize: '1.3rem' }}>手動予約の登録</h3>
-        <p style={{ color: 'var(--accent-blue)', marginBottom: '20px', fontWeight: 'bold' }}>{studio} - {dateStr} {time}〜</p>
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(4px)' }}>
+      <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '35px', width: '100%', maxWidth: '500px', boxShadow: '0 20px 40px rgba(0,0,0,0.15)', border: '1px solid var(--border-color)' }}>
+        <h3 style={{ marginBottom: '5px', fontSize: '1.4rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>手動予約の登録</h3>
+        <p style={{ color: 'var(--accent-blue)', marginBottom: '25px', fontSize: '0.95rem', fontWeight: 'bold' }}>{studio} - {dateStr} {time}〜</p>
         
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '25px', backgroundColor: '#f5f5f5', padding: '5px', borderRadius: '10px' }}>
           <button 
             type="button"
             onClick={() => setActiveTab('ID')} 
-            className={`btn-outline ${activeTab === 'ID' ? 'active-tab' : ''}`}
-            style={{ flex: 1, backgroundColor: activeTab === 'ID' ? 'var(--accent-blue)' : 'transparent', color: activeTab === 'ID' ? '#fff' : 'var(--text-secondary)' }}
+            style={{ 
+              flex: 1, 
+              padding: '10px',
+              borderRadius: '8px',
+              fontSize: '0.9rem',
+              fontWeight: 'bold',
+              backgroundColor: activeTab === 'ID' ? '#ffffff' : 'transparent', 
+              color: activeTab === 'ID' ? 'var(--accent-blue)' : 'var(--text-secondary)',
+              boxShadow: activeTab === 'ID' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
+              transition: 'all 0.2s ease'
+            }}
           >会員番号で登録</button>
           <button 
             type="button"
             onClick={() => setActiveTab('NEW')} 
-            className={`btn-outline ${activeTab === 'NEW' ? 'active-tab' : ''}`}
-            style={{ flex: 1, backgroundColor: activeTab === 'NEW' ? 'var(--accent-blue)' : 'transparent', color: activeTab === 'NEW' ? '#fff' : 'var(--text-secondary)' }}
+            style={{ 
+              flex: 1, 
+              padding: '10px',
+              borderRadius: '8px',
+              fontSize: '0.9rem',
+              fontWeight: 'bold',
+              backgroundColor: activeTab === 'NEW' ? '#ffffff' : 'transparent', 
+              color: activeTab === 'NEW' ? 'var(--accent-blue)' : 'var(--text-secondary)',
+              boxShadow: activeTab === 'NEW' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
+              transition: 'all 0.2s ease'
+            }}
           >情報手入力で登録</button>
         </div>
 
@@ -88,22 +106,23 @@ export default function AdminBookingModal({ isOpen, onClose, onSubmit, studio, d
           )}
 
           {/* 共通: 利用時間選択 */}
-          <div style={{ marginBottom: '20px', borderTop: '1px solid #444', paddingTop: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>利用時間 (最大8時間)</label>
+          <div style={{ marginBottom: '25px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
+            <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>利用時間 (最大8時間)</label>
             <select 
               className="form-input" 
               value={durationHours} 
               onChange={e => setDurationHours(Number(e.target.value))}
+              style={{ backgroundColor: '#fcfcfc' }}
             >
               {[1, 2, 3, 4, 5, 6, 7, 8].map(h => (
                 <option key={h} value={h}>{h}時間</option>
               ))}
             </select>
           </div>
-
+ 
           <div style={{ display: 'flex', gap: '15px' }}>
-            <button type="button" onClick={onClose} style={{ flex: 1, padding: '12px', backgroundColor: 'transparent', border: '1px solid #555', color: '#ccc', borderRadius: '4px', cursor: 'pointer' }}>キャンセル</button>
-            <button type="submit" className="btn-primary" style={{ flex: 2, padding: '12px' }}>この枠を予約済みに変更</button>
+            <button type="button" onClick={onClose} style={{ flex: 1, padding: '14px', backgroundColor: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s ease' }}>キャンセル</button>
+            <button type="submit" className="btn-primary" style={{ flex: 2, padding: '14px' }}>予約を確定する</button>
           </div>
         </form>
       </div>

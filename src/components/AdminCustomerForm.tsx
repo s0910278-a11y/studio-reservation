@@ -34,8 +34,8 @@ export default function AdminCustomerForm() {
   };
 
   return (
-    <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#1a1a1a', borderRadius: '8px', border: '1px solid #333' }}>
-      <h4 style={{ marginBottom: '15px', fontSize: '1rem', color: '#fff' }}>新規顧客 手動登録</h4>
+    <div style={{ marginTop: '20px', padding: '20px', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}>
+      <h4 style={{ marginBottom: '15px', fontSize: '1.1rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>新規顧客 手動登録</h4>
       <form onSubmit={handleSubmit}>
         <input 
           type="text" 
