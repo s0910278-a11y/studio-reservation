@@ -56,6 +56,16 @@ export async function POST(request: Request) {
         .toUpperCase();
     };
 
+    // Robust field getter (ignores spaces and casing in header keys)
+    const getField = (obj: any, fieldName: string) => {
+      if (!obj) return "";
+      if (obj[fieldName] !== undefined) return obj[fieldName];
+      // Search with normalized keys
+      const searchKey = fieldName.trim();
+      const actualKey = Object.keys(obj).find(k => k.trim() === searchKey);
+      return actualKey ? obj[actualKey] : "";
+    };
+
     // 1. Membership Validation & Creation
     let finalMemberNo = normalizeMemberNo(memberNo);
     
@@ -63,23 +73,38 @@ export async function POST(request: Request) {
       const targetNo = normalizeMemberNo(memberNo);
       // Existing Member Flow
       const users = await getUsersFromSheet();
-      const existingUser = users.find((u: any) => normalizeMemberNo(u['会員ナンバー']) === targetNo);
+      const existingUser = users.find((u: any) => normalizeMemberNo(getField(u, '会員ナンバー')) === targetNo);
       
       if (!existingUser) {
-        return NextResponse.json({ error: 'ご入力の会員ナンバーは登録されていません。' }, { status: 404 });
-      }
-      
-      // Populate missing info from sheet
-      name = existingUser['お名前'];
-      phone = existingUser['電話番号'];
-      email = existingUser['メールアドレス'];
-      finalMemberNo = existingUser['会員ナンバー'] || targetNo;
-      
-      const isStopped = String(existingUser['利用停止フラグ']).toLowerCase() === 'true';
-      const isRefused = String(existingUser['予約拒否']).toLowerCase() === 'true';
-      
-      if (isStopped || isRefused) {
-        isBanCandidate = true;
+        // もし「会員ナンバー」で見つからない場合、全列をチェックする最後の手段
+        console.warn(`Member not found by key for: ${targetNo}. Checking all columns...`);
+        const desperateMatch = users.find((u: any) => 
+          Object.values(u).some(val => normalizeMemberNo(val) === targetNo)
+        );
+        
+        if (!desperateMatch) {
+          return NextResponse.json({ error: 'ご入力の会員ナンバーは登録されていません。' }, { status: 404 });
+        }
+        
+        // Populate missing info from sheet
+        name = getField(desperateMatch, 'お名前');
+        phone = getField(desperateMatch, '電話番号');
+        email = getField(desperateMatch, 'メールアドレス');
+        finalMemberNo = getField(desperateMatch, '会員ナンバー') || targetNo;
+        
+        const isStopped = String(getField(desperateMatch, '利用停止フラグ')).toLowerCase() === 'true';
+        const isRefused = String(getField(desperateMatch, '予約拒否')).toLowerCase() === 'true';
+        if (isStopped || isRefused) isBanCandidate = true;
+      } else {
+        // Populate missing info from sheet
+        name = getField(existingUser, 'お名前');
+        phone = getField(existingUser, '電話番号');
+        email = getField(existingUser, 'メールアドレス');
+        finalMemberNo = getField(existingUser, '会員ナンバー') || targetNo;
+        
+        const isStopped = String(getField(existingUser, '利用停止フラグ')).toLowerCase() === 'true';
+        const isRefused = String(getField(existingUser, '予約拒否')).toLowerCase() === 'true';
+        if (isStopped || isRefused) isBanCandidate = true;
       }
 
     } else if (!memberNo && name) {
@@ -99,9 +124,9 @@ export async function POST(request: Request) {
 
       for (const u of users) {
         let score = 0;
-        let pName = (u['お名前'] || "")?.replace(/\s+/g, '') === normName;
-        let pPhone = (u['電話番号'] || "")?.replace(/[^\d]/g, '') === normPhone;
-        let pEmail = (u['メールアドレス'] || "")?.toLowerCase() === normEmail;
+        let pName = (getField(u, 'お名前') || "").replace(/\s+/g, '') === normName;
+        let pPhone = (getField(u, '電話番号') || "").replace(/[^\d]/g, '') === normPhone;
+        let pEmail = (getField(u, 'メールアドレス') || "").toLowerCase() === normEmail;
         
         if (pName) score += 2;
         if (pPhone) score += 1;
@@ -111,15 +136,15 @@ export async function POST(request: Request) {
           if (!matchedUser || score > matchScore) {
             matchedUser = u;
             matchScore = score;
-            const isStopped = String(u['利用停止フラグ']).toLowerCase() === 'true';
-            const isRefused = String(u['予約拒否']).toLowerCase() === 'true';
+            const isStopped = String(getField(u, '利用停止フラグ')).toLowerCase() === 'true';
+            const isRefused = String(getField(u, '予約拒否')).toLowerCase() === 'true';
             isBanCandidate = isStopped || isRefused;
           }
         }
       }
 
       if (matchedUser) {
-         finalMemberNo = matchedUser['会員ナンバー'] || matchedUser['memberNo'] || "";
+         finalMemberNo = getField(matchedUser, '会員ナンバー') || getField(matchedUser, 'memberNo') || "";
          if (isBanCandidate) {
             name = "[BAN疑い] " + name;
          }
@@ -134,7 +159,7 @@ export async function POST(request: Request) {
         }
 
         let newId = generateRandomId();
-        while (users.some((u:any) => normalizeMemberNo(u['会員ナンバー']) === newId)) {
+        while (users.some((u:any) => normalizeMemberNo(getField(u, '会員ナンバー')) === newId)) {
            newId = generateRandomId();
         }
         finalMemberNo = newId;

@@ -94,16 +94,23 @@ export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
     }
   }, [formData.startTime, formData.date, formData.studio, bookedSlots]);
 
+  const [lastPrefillKey, setLastPrefillKey] = useState<string>('');
+
   useEffect(() => {
     if (prefill) {
-      setFormData(prev => ({
-        ...prev,
-        studio: prefill.studio,
-        date: prefill.date,
-        startTime: prefill.startTime
-      }));
+      const currentKey = `${prefill.studio}-${prefill.date}-${prefill.startTime}`;
+      if (currentKey !== lastPrefillKey) {
+        setFormData(prev => ({
+          ...prev,
+          studio: prefill.studio,
+          date: prefill.date,
+          startTime: prefill.startTime
+        }));
+        setLastPrefillKey(currentKey);
+        setAgreed(false); // 新しい枠を選んだら同意をリセット
+      }
     }
-  }, [prefill]);
+  }, [prefill, lastPrefillKey]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
