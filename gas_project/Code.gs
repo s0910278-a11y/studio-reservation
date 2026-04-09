@@ -285,9 +285,20 @@ ${b.name} 様
     if (action === 'createUser') {
       const sheet = getSheet('顧客リスト');
       const u = payload.data;
-      // "会員ナンバー", "お名前", "メールアドレス", "電話番号", "利用停止フラグ", "キャンセル回数", "登録日時"
+      
+      // appendRowのかわりに、A列の最初の空行を探す（ゴースト行対策）
+      const data = sheet.getDataRange().getValues();
+      let targetRow = data.length + 1;
+      for (let i = 1; i < data.length; i++) {
+        if (!data[i][0]) {
+          targetRow = i + 1;
+          break;
+        }
+      }
+
+      // "会員ナンバー", "お名前", "メールアドレス", "電話番号", "利用停止フラグ", "キャンセル回数", "登録日時", "ご利用回数", "予約拒否"
       const regAt = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd HH:mm');
-      sheet.appendRow([
+      const rowData = [
         u.memberNo,
         u.name,
         u.email,
@@ -297,8 +308,10 @@ ${b.name} 様
         regAt, // 登録日時 (G列)
         0,     // ご利用回数 (H列)
         false  // 予約拒否 (I列)
-      ]);
-      return createJsonResponse({ success: true });
+      ];
+      
+      sheet.getRange(targetRow, 1, 1, rowData.length).setValues([rowData]);
+      return createJsonResponse({ success: true, row: targetRow });
     }
 
     if (action === 'updateBookingStatus') {

@@ -164,12 +164,13 @@ export async function POST(request: Request) {
         }
         finalMemberNo = newId;
 
-        await createUserInSheet({
+        const userCreateRes = await createUserInSheet({
            memberNo: finalMemberNo,
            name,
            phone,
            email
         });
+        console.log(`User created successfully: ${finalMemberNo} at row ${userCreateRes.row || 'unknown'}`);
       }
     } else if (memberNo === 'ADMIN') {
       finalMemberNo = 'ADMIN';
