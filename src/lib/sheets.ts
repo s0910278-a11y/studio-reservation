@@ -19,7 +19,7 @@ export const getBookingsFromSheet = async () => {
   const url = getGasUrl();
   const res = await fetch(`${url}?action=getBookings`, { 
     next: { revalidate: 0 },
-    signal: AbortSignal.timeout(8000) 
+    signal: AbortSignal.timeout(15000) 
   });
   if (!res.ok) throw new Error('Failed to fetch bookings from GAS');
   
@@ -34,7 +34,7 @@ export const getUsersFromSheet = async () => {
   const url = getGasUrl();
   const res = await fetch(`${url}?action=getUsers`, { 
     next: { revalidate: 0 },
-    signal: AbortSignal.timeout(8000)
+    signal: AbortSignal.timeout(15000)
   });
   if (!res.ok) throw new Error('Failed to fetch users from GAS');
   
@@ -51,7 +51,7 @@ export const createBookingInSheet = async (bookingData: any) => {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain' }, // GAS expects plain text payload sometimes without CORS issues
     body: JSON.stringify({ action: 'createBooking', data: bookingData }),
-    signal: AbortSignal.timeout(8000)
+    signal: AbortSignal.timeout(15000)
   });
   
   if (!res.ok) throw new Error('Failed to post booking to GAS');
@@ -69,7 +69,7 @@ export const createUserInSheet = async (userData: any) => {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify({ action: 'createUser', data: userData }),
-    signal: AbortSignal.timeout(8000)
+    signal: AbortSignal.timeout(15000)
   });
   
   if (!res.ok) throw new Error('Failed to post user to GAS');
@@ -85,7 +85,7 @@ export const getEquipmentFromSheet = async () => {
   const url = getGasUrl();
   const res = await fetch(`${url}?action=getEquipment`, { 
     next: { revalidate: 0 },
-    signal: AbortSignal.timeout(8000)
+    signal: AbortSignal.timeout(15000)
   });
   if (!res.ok) throw new Error('Failed to fetch equipment from GAS');
   

@@ -46,14 +46,24 @@ export async function POST(request: Request) {
     let { name, phone, email, memberNo, studio, date, startTime, peopleCount, durationHours = 1 } = data;
     let isBanCandidate = false;
 
+    // Normalize member number helper
+    const normalizeMemberNo = (no: any) => {
+      if (!no) return "";
+      // 全角→半角変換, 空白/ハイフン除去, 大文字化
+      return String(no)
+        .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (s) => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
+        .replace(/[-\s]/g, "")
+        .toUpperCase();
+    };
+
     // 1. Membership Validation & Creation
-    let finalMemberNo = memberNo;
+    let finalMemberNo = normalizeMemberNo(memberNo);
     
     if (memberNo && memberNo !== 'ADMIN') {
-      const targetNo = String(memberNo).trim().toUpperCase();
+      const targetNo = normalizeMemberNo(memberNo);
       // Existing Member Flow
       const users = await getUsersFromSheet();
-      const existingUser = users.find((u: any) => String(u['会員ナンバー']).trim().toUpperCase() === targetNo);
+      const existingUser = users.find((u: any) => normalizeMemberNo(u['会員ナンバー']) === targetNo);
       
       if (!existingUser) {
         return NextResponse.json({ error: 'ご入力の会員ナンバーは登録されていません。' }, { status: 404 });
@@ -63,6 +73,7 @@ export async function POST(request: Request) {
       name = existingUser['お名前'];
       phone = existingUser['電話番号'];
       email = existingUser['メールアドレス'];
+      finalMemberNo = existingUser['会員ナンバー'] || targetNo;
       
       const isStopped = String(existingUser['利用停止フラグ']).toLowerCase() === 'true';
       const isRefused = String(existingUser['予約拒否']).toLowerCase() === 'true';
@@ -79,28 +90,27 @@ export async function POST(request: Request) {
 
       const users = await getUsersFromSheet();
       
-      const normName = name.replace(/\s+/g, '');
-      const normPhone = phone.replace(/[^\d]/g, '');
-      const normEmail = email.toLowerCase();
+      const normName = (name || "").replace(/\s+/g, '');
+      const normPhone = (phone || "").replace(/[^\d]/g, '');
+      const normEmail = (email || "").toLowerCase();
 
       let matchScore = 0;
       let matchedUser = null;
 
       for (const u of users) {
         let score = 0;
-        let pName = u['お名前']?.replace(/\s+/g, '') === normName;
-        let pPhone = u['電話番号']?.replace(/[^\d]/g, '') === normPhone;
-        let pEmail = u['メールアドレス']?.toLowerCase() === normEmail;
+        let pName = (u['お名前'] || "")?.replace(/\s+/g, '') === normName;
+        let pPhone = (u['電話番号'] || "")?.replace(/[^\d]/g, '') === normPhone;
+        let pEmail = (u['メールアドレス'] || "")?.toLowerCase() === normEmail;
         
-        if (pName) score += 2; // 名前一致は強い候補
+        if (pName) score += 2;
         if (pPhone) score += 1;
         if (pEmail) score += 1;
 
-        if (score >= 2) { // 2要素以上の一致、または名前のみ一致(2点)で既存会員扱い
+        if (score >= 2) {
           if (!matchedUser || score > matchScore) {
             matchedUser = u;
             matchScore = score;
-            // BAN検知: E列(停止) または I列(拒否) が TRUE の場合
             const isStopped = String(u['利用停止フラグ']).toLowerCase() === 'true';
             const isRefused = String(u['予約拒否']).toLowerCase() === 'true';
             isBanCandidate = isStopped || isRefused;
@@ -109,27 +119,26 @@ export async function POST(request: Request) {
       }
 
       if (matchedUser) {
-         finalMemberNo = matchedUser['会員ナンバー'];
+         finalMemberNo = matchedUser['会員ナンバー'] || matchedUser['memberNo'] || "";
          if (isBanCandidate) {
-            // カレンダー名や管理情報で目立つよう名前に警告を付与する
             name = "[BAN疑い] " + name;
          }
-      } else {
-        // 推測困難なA + 英大文字数字の4桁ランダム生成
+      } 
+      
+      if (!finalMemberNo) {
         const generateRandomId = () => {
-           const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 間違えやすい I, O, 0, 1 を除外
+           const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
            let id = 'A';
            for (let i = 0; i < 3; i++) id += chars.charAt(Math.floor(Math.random() * chars.length));
            return id;
         }
 
         let newId = generateRandomId();
-        while (users.some((u:any) => u['会員ナンバー'] === newId)) {
-           newId = generateRandomId(); // 衝突時は再生成
+        while (users.some((u:any) => normalizeMemberNo(u['会員ナンバー']) === newId)) {
+           newId = generateRandomId();
         }
         finalMemberNo = newId;
 
-        // Create new user in sheet
         await createUserInSheet({
            memberNo: finalMemberNo,
            name,
@@ -163,8 +172,6 @@ export async function POST(request: Request) {
     const endTime = `${endH}:${endM}`;
     
     // Conflict check (Strict Overlap Validation)
-    // Overlap condition: MAX(start1, start2) < MIN(end1, end2)
-    // Or simpler: newStart < existingEnd && newEnd > existingStart
     const newStartMins = startH * 60 + startM;
     const newEndMins = newStartMins + Number(durationHours) * 60;
 
@@ -179,7 +186,9 @@ export async function POST(request: Request) {
     const bookings = await getBookingsFromSheet();
     const conflict = bookings.find((b: any) => {
       // 日付とスタジオが一致するか？
-      const isSameDate = (b['日付'] || "").substring(0, 10) === new Date(date).toISOString().substring(0, 10) || b['日付'].startsWith(new Date(date).toISOString().substring(0, 10));
+      const bDate = (b['日付'] || "").substring(0, 10);
+      const dDate = new Date(date).toISOString().substring(0, 10);
+      const isSameDate = bDate === dDate;
       const isSameStudio = b['スタジオ'].includes(studio.includes('Studio A') ? 'Studio A' : 'Studio B');
       if (!isSameDate || !isSameStudio || b['ステータス'] !== 'ACTIVE') return false;
 
@@ -189,7 +198,7 @@ export async function POST(request: Request) {
       const exStartMins = exStartH * 60 + exStartM;
       const exEndMins = exEndH * 60 + exEndM;
 
-      // 重複判定: 新しい予約の開始が既存の終了より前 ＆ 新しい予約の終了が既存の開始より後
+      // 重複判定
       return newStartMins < exEndMins && newEndMins > exStartMins;
     });
 
@@ -216,7 +225,6 @@ export async function POST(request: Request) {
       gasUrl: "https://script.google.com/macros/s/AKfycbxOE4x6w2NNbbrXJ_NSqf2CaTT5LaWvKflPzQnB-jkOuh9mg2IwA9nPcky6fPqcM3Tz4w/exec"
     };
 
-    // I列「予約拒否」などの BAN 候補者の場合：枠を確保せずお断りメールのみ
     if (isBanCandidate) {
       const gasUrl = "https://script.google.com/macros/s/AKfycbxOE4x6w2NNbbrXJ_NSqf2CaTT5LaWvKflPzQnB-jkOuh9mg2IwA9nPcky6fPqcM3Tz4w/exec";
       try {

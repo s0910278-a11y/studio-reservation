@@ -136,8 +136,9 @@ export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
       }
       setFormData(prev => ({ ...prev, [name]: formatted }));
     } else if (name === 'memberNo') {
-      // 半角英数字のみ・自動大文字化（全角や平仮名を弾く）
-      let formatted = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      // 全角英数字を半角に変換し、大文字化して半角英数字のみ許可
+      let val = value.replace(/[Ａ-Ｚａ-ｚ０-９]/g, (s) => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+      let formatted = val.toUpperCase().replace(/[^A-Z0-9]/g, '');
       setFormData(prev => ({ ...prev, [name]: formatted }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
