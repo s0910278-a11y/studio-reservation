@@ -8,6 +8,7 @@ import { SMTPServer } from 'smtp-server';
 import nodemailer from 'nodemailer';
 import { createSender } from '../src/smtp.mjs';
 import { makeMessage } from '../src/templates.mjs';
+import { probeEnvelope } from '../src/probe.mjs';
 const FROM = 'sender@example.co.jp';
 
 test('real loopback SMTPS: authentication, TLS, envelope, Japanese MIME, acceptance and auth failure', async () => {
@@ -17,6 +18,7 @@ test('real loopback SMTPS: authentication, TLS, envelope, Japanese MIME, accepta
     '-subj', '/CN=localhost', '-addext', 'subjectAltName=DNS:localhost',
     '-keyout', keyPath, '-out', certPath], { stdio: 'ignore' });
   const cert = readFileSync(certPath), captured = [];
+  let recipients = 0, rejectEnvelope = false;
   const config = { from: FROM, host: 'smtp.alpha-prm.jp', user: FROM.replace('@', '%'),
     password: 'synthetic-loopback-password', recipient: 'owner.smtp.test@gmail.com',
     replyTo: 'studio@example.co.jp', baseUrl: 'https://isolated-test.netlify.app' };
@@ -25,6 +27,11 @@ test('real loopback SMTPS: authentication, TLS, envelope, Japanese MIME, accepta
       if (auth.username === config.user && auth.password === config.password) callback(null, { user: auth.username });
       else callback(new Error('Invalid test credentials'));
     },
+    onMailFrom(address, session, callback) {
+      if (rejectEnvelope) return callback(Object.assign(new Error('Mail relay denied. private'), { responseCode: 550 }));
+      callback();
+    },
+    onRcptTo(address, session, callback) { recipients++; callback(); },
     onData(stream, session, callback) {
       const chunks = [];
       stream.on('data', chunk => chunks.push(chunk));
@@ -37,6 +44,28 @@ test('real loopback SMTPS: authentication, TLS, envelope, Japanese MIME, accepta
   const factory = options => nodemailer.createTransport({ ...options, host: '127.0.0.1', port,
     tls: { ...options.tls, servername: 'localhost', ca: cert } });
   try {
+    for (const kind of ['probe-default', 'probe-hostname', 'probe-login']) {
+      const probe = await probeEnvelope(config, kind, factory);
+      assert.equal(probe.auth, 'accepted');
+      assert.equal(probe.authStatus, 235);
+      assert.equal(probe.mailFrom.status, 250);
+      assert.equal(probe.messageSubmitted, false);
+    }
+    rejectEnvelope = true;
+    const denied = await probeEnvelope(config, 'probe-default', factory);
+    assert.equal(denied.mailFrom.status, 550);
+    assert.equal(denied.mailFrom.reason, 'relay_denied');
+    assert.doesNotMatch(JSON.stringify(denied), /private/);
+    server.options.disabledCommands.push('AUTH');
+    // Reproduce verify() succeeding without checking a password when no AUTH is offered.
+    assert.equal(await createSender({ ...config, password: 'wrong' }, factory).verify(), true);
+    const noAuth = await probeEnvelope(config, 'probe-default', factory);
+    assert.equal(noAuth.auth, 'not_advertised');
+    assert.equal(noAuth.mailFrom.status, 550);
+    server.options.disabledCommands = server.options.disabledCommands.filter(command => command !== 'AUTH');
+    assert.equal(recipients, 0);
+    assert.equal(captured.length, 0);
+    rejectEnvelope = false;
     assert.equal(await createSender(config, factory).verify(), true);
     assert.equal(captured.length, 0);
     await assert.rejects(createSender({ ...config, password: 'wrong' }, factory).verify(),

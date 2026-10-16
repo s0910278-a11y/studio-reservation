@@ -93,6 +93,16 @@ allowlisted diagnostics, without changing their unknown delivery status.
 A failed diagnostic must not be retried by
 changing the run ID without checking the account settings first.
 
+`probe probe-default`, `probe probe-hostname`, and `probe probe-login` are
+non-delivery diagnostics. They inspect advertised authentication mechanisms,
+require an explicit SMTP 235 response before reporting authentication accepted,
+and stop at MAIL FROM followed by RSET/QUIT. They never issue RCPT TO or DATA.
+The alternatives compare the default EHLO name, the test site's hostname,
+and the advertised LOGIN mechanism. Every variant has its own immutable claim.
+Only numeric replies and fixed reason categories are returned; no server text,
+addresses, passwords or authentication payloads are persisted. A plain
+`verify()` success alone must not be treated as evidence that AUTH ran.
+
 Real provider connectivity, deployed Function/Blobs behavior, inbox delivery,
 spam classification, authentication headers and reply routing are pending.
 The production mail adapter and switch/rollback integration are also pending;

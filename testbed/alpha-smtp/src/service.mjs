@@ -2,13 +2,14 @@ import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
 import { KINDS, TestError, readConfig } from './config.mjs';
 import { makeMessage } from './templates.mjs';
 import { safeDiagnostic } from './smtp.mjs';
+import { PROBE_KINDS, probeEnvelope } from './probe.mjs';
 
 const hash = value => createHash('sha256').update(value).digest();
 const json = (data, status = 200) => Response.json(data, {
   status, headers: { 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' },
 });
 
-export function createHandler({ getEnv, storeFactory, senderFactory, audit = () => {} }) {
+export function createHandler({ getEnv, storeFactory, senderFactory, probeFactory = probeEnvelope, audit = () => {} }) {
   return async (request, context) => {
     try {
       const config = readConfig(getEnv, context?.site?.id);
@@ -29,7 +30,7 @@ export function createHandler({ getEnv, storeFactory, senderFactory, audit = () 
             !Object.hasOwn(body, 'kind')) throw new TestError('INVALID_INPUT', 400);
         kind = body.kind;
       } else throw new TestError('METHOD_NOT_ALLOWED', 405);
-      if (!KINDS.includes(kind) && kind !== 'connection') throw new TestError('INVALID_KIND', 400);
+      if (!KINDS.includes(kind) && kind !== 'connection' && !PROBE_KINDS.includes(kind)) throw new TestError('INVALID_KIND', 400);
       const key = hash(`${config.runId}\n${config.recipient}\n${kind}`).toString('hex');
       const store = storeFactory();
       if (request.method === 'GET') {
@@ -49,11 +50,15 @@ export function createHandler({ getEnv, storeFactory, senderFactory, audit = () 
       audit({ event: 'smtp_test', testId: key, kind, state: 'claimed' });
       let state, diagnostic;
       try {
-        const sender = senderFactory(config);
-        if (kind === 'connection') {
+        if (PROBE_KINDS.includes(kind)) {
+          diagnostic = await probeFactory(config, kind);
+          state = 'probe_completed';
+        } else if (kind === 'connection') {
+          const sender = senderFactory(config);
           await sender.verify();
           state = 'smtp_verified';
         } else {
+          const sender = senderFactory(config);
           const result = await sender(makeMessage(kind, config, key));
           state = result.accepted?.length === 1 && result.accepted[0] === config.recipient &&
             !result.rejected?.length ? 'smtp_accepted' : 'unknown';
@@ -71,7 +76,7 @@ export function createHandler({ getEnv, storeFactory, senderFactory, audit = () 
       }
       audit({ event: 'smtp_test', testId: key, kind, state });
       return json({ testId: key, kind, state, retry: false, ...(diagnostic ? { diagnostic } : {}) },
-        ['smtp_accepted', 'smtp_verified'].includes(state) ? 200 : 503);
+        ['smtp_accepted', 'smtp_verified', 'probe_completed'].includes(state) ? 200 : 503);
     } catch (error) {
       return json({ error: error instanceof TestError ? error.code : 'TEST_OPERATION_FAILED' },
         error instanceof TestError ? error.status : 503);

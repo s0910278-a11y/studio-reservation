@@ -251,3 +251,15 @@ test('verification failures persist only allowlisted diagnostics without server 
   assert.doesNotMatch(JSON.stringify([...h.store.entries, h.audit, result]), /private credential/);
   assert.deepEqual(safeDiagnostic({ code: secret, command: secret, responseCode: secret }), { code: 'UNCLASSIFIED' });
 });
+
+test('envelope probes have separate immutable claims and never use the mail sender', async () => {
+  let probes = 0;
+  const h = harness({ dependencies: {
+    senderFactory: () => { throw new Error('Must not enter mail sender'); },
+    probeFactory: async () => { probes++; return { messageSubmitted: false }; },
+  } });
+  assert.equal((await h.handler(request('probe-default'), context)).status, 200);
+  assert.equal((await h.handler(request('probe-default'), context)).status, 409);
+  assert.equal(probes, 1);
+  assert.equal(h.sent.length, 0);
+});

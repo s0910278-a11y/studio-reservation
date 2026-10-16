@@ -2,6 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import nodemailer from 'nodemailer';
 import { KINDS, TestError, testOrigin } from '../src/config.mjs';
 import { makeMessage } from '../src/templates.mjs';
+import { PROBE_KINDS } from '../src/probe.mjs';
 
 // No arguments or URLs containing credentials; no shell commands with secret values.
 const [operation, kind] = process.argv.slice(2);
@@ -20,7 +21,8 @@ try {
     console.info('Offline previews written. No network or email delivery performed.');
   } else {
     if (!(operation === 'verify' && kind === 'connection') &&
-        !(operation === 'status' && [...KINDS, 'connection'].includes(kind)) &&
+        !(operation === 'probe' && PROBE_KINDS.includes(kind)) &&
+        !(operation === 'status' && [...KINDS, 'connection', ...PROBE_KINDS].includes(kind)) &&
         !(operation === 'send' && KINDS.includes(kind))) throw new TestError('INVALID_OPERATION');
     const origin = testOrigin(process.env.SMTP_TEST_BASE_URL);
     const token = process.env.SMTP_TEST_TOKEN;
