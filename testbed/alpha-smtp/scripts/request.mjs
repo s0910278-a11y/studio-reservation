@@ -36,7 +36,7 @@ try {
     const result = await response.json();
     console.info(JSON.stringify({ status: response.status, testId: result.testId,
       kind: result.kind, state: result.state, retry: result.retry,
-      ...(kind === 'connection' ? { diagnostic: result.diagnostic } : {}) }));
+      ...(result.diagnostic ? { diagnostic: result.diagnostic } : {}) }));
     if (!response.ok) process.exitCode = 1;
   }
 } catch {

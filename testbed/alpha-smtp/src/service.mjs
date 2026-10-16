@@ -36,7 +36,7 @@ export function createHandler({ getEnv, storeFactory, senderFactory, audit = () 
         const result = await store.get(`results/${key}`, { type: 'json', consistency: 'strong' });
         const claimed = await store.get(`claims/${key}`, { type: 'json', consistency: 'strong' });
         return json({ testId: key, kind, state: result?.state || (claimed ? 'claimed_or_unknown' : 'not_attempted'),
-          ...(kind === 'connection' && result?.diagnostic ? { diagnostic: result.diagnostic } : {}),
+          ...(result?.diagnostic ? { diagnostic: result.diagnostic } : {}),
           at: result?.at || claimed?.at || null });
       }
       // A persistent create-only claim is never deleted or expired automatically.
@@ -61,7 +61,7 @@ export function createHandler({ getEnv, storeFactory, senderFactory, audit = () 
       } catch (error) {
         // Error text can contain addresses, server responses or credentials; do not log it.
         state = kind === 'connection' ? 'verification_failed' : 'unknown';
-        if (kind === 'connection') diagnostic = safeDiagnostic(error);
+        diagnostic = safeDiagnostic(error);
       }
       const result = { state, kind, at: new Date().toISOString(), ...(diagnostic ? { diagnostic } : {}) };
       try { await store.setJSON(`results/${key}`, result, { onlyIfNew: true }); }

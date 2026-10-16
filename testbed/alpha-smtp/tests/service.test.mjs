@@ -165,7 +165,9 @@ test('timeout/SMTP error is unknown and cannot automatically retry or fall back'
   const h = harness({ sendError: true });
   const response = await h.handler(request(), context);
   assert.equal(response.status, 503);
-  assert.equal((await response.json()).state, 'unknown');
+  const result = await response.json();
+  assert.equal(result.state, 'unknown');
+  assert.deepEqual(result.diagnostic, { code: 'UNCLASSIFIED' });
   assert.equal((await h.handler(request(), context)).status, 409);
   assert.equal(h.sent.length, 1);
   const logs = JSON.stringify(h.audit);

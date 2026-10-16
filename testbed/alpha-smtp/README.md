@@ -88,7 +88,9 @@ For a single authentication/TLS diagnostic without sending any email, run
 `node scripts/request.mjs status connection`. It uses its own immutable claim
 and does not unlock or retry either mail kind. It returns only allowlisted error
 codes, SMTP stages and numeric response codes; raw server text and credentials
-are never returned or logged. A failed diagnostic must not be retried by
+are never returned or logged. Mail submission failures also retain only these
+allowlisted diagnostics, without changing their unknown delivery status.
+A failed diagnostic must not be retried by
 changing the run ID without checking the account settings first.
 
 Real provider connectivity, deployed Function/Blobs behavior, inbox delivery,
