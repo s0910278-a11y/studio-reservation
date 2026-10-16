@@ -1,0 +1,5 @@
+.env*
+!.env.example
+.netlify/
+previews/
+coverage/

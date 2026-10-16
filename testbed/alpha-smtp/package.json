@@ -1,0 +1,20 @@
+{
+  "name": "studio-reservation-alpha-smtp-test",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "preview": "node scripts/request.mjs preview"
+  },
+  "dependencies": {
+    "@netlify/blobs": "11.1.4",
+    "nodemailer": "10.1.2"
+  },
+  "devDependencies": {
+    "smtp-server": "3.19.23"
+  }
+}
