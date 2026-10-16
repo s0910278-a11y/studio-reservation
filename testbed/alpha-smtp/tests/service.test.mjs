@@ -5,7 +5,7 @@ import vm from 'node:vm';
 import { createHandler } from '../src/service.mjs';
 import { readConfig } from '../src/config.mjs';
 import { fixture, renderOriginal } from '../src/templates.mjs';
-import { transportOptions } from '../src/smtp.mjs';
+import { safeDiagnostic, transportOptions } from '../src/smtp.mjs';
 
 const FROM = 'sender@example.co.jp';
 const PRODUCTION_SITE_ID = 'production-site-must-be-blocked';
@@ -215,4 +215,37 @@ test('production transport requires certificate validation and TLS on port 465',
   assert.equal(options.tls.rejectUnauthorized, true);
   assert.equal(options.tls.minVersion, 'TLSv1.2');
   assert.equal(options.logger, false); assert.equal(options.debug, false);
+});
+
+test('connection diagnostic authenticates once, never submits email, and preserves existing unknown claims', async () => {
+  let verified = 0;
+  const h = harness({ dependencies: { senderFactory: () => Object.assign(
+    async () => { throw new Error('Must not submit email'); },
+    { verify: async () => { verified++; return true; } }) } });
+  const response = await h.handler(request('connection'), context);
+  assert.equal((await response.json()).state, 'smtp_verified');
+  assert.equal((await h.handler(request('connection'), context)).status, 409);
+  assert.equal(verified, 1);
+  assert.equal(h.sent.length, 0);
+  const failed = harness({ sendError: true });
+  await failed.handler(request(), context);
+  await failed.handler(request('connection'), context);
+  assert.equal((await failed.handler(request(), context)).status, 409);
+  assert.equal(failed.sent.length, 1);
+});
+
+test('verification failures persist only allowlisted diagnostics without server text or credentials', async () => {
+  const secret = 'private credential and SMTP response';
+  const h = harness({ dependencies: { senderFactory: () => ({ verify: async () => {
+    throw Object.assign(new Error(secret), { code: 'EAUTH', command: 'AUTH PLAIN',
+      responseCode: 535, response: secret, password: secret });
+  } }) } });
+  const response = await h.handler(request('connection'), context);
+  assert.equal(response.status, 503);
+  const result = await response.json();
+  assert.equal(result.state, 'verification_failed');
+  assert.deepEqual(result.diagnostic, { code: 'EAUTH', stage: 'AUTH', responseCode: 535 });
+  assert.equal((await h.handler(request('connection'), context)).status, 409);
+  assert.doesNotMatch(JSON.stringify([...h.store.entries, h.audit, result]), /private credential/);
+  assert.deepEqual(safeDiagnostic({ code: secret, command: secret, responseCode: secret }), { code: 'UNCLASSIFIED' });
 });

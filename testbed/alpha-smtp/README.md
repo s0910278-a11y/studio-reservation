@@ -83,6 +83,14 @@ deleted or expired. No automatic retries or Gmail fallback are implemented.
 run ID or delete a claim to retry until the previous outcome has been checked.
 SMTP cannot guarantee exactly-once delivery after an ambiguous connection loss.
 
+For a single authentication/TLS diagnostic without sending any email, run
+`node scripts/request.mjs verify connection`, then inspect it with
+`node scripts/request.mjs status connection`. It uses its own immutable claim
+and does not unlock or retry either mail kind. It returns only allowlisted error
+codes, SMTP stages and numeric response codes; raw server text and credentials
+are never returned or logged. A failed diagnostic must not be retried by
+changing the run ID without checking the account settings first.
+
 Real provider connectivity, deployed Function/Blobs behavior, inbox delivery,
 spam classification, authentication headers and reply routing are pending.
 The production mail adapter and switch/rollback integration are also pending;

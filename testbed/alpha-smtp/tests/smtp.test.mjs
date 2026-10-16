@@ -37,6 +37,11 @@ test('real loopback SMTPS: authentication, TLS, envelope, Japanese MIME, accepta
   const factory = options => nodemailer.createTransport({ ...options, host: '127.0.0.1', port,
     tls: { ...options.tls, servername: 'localhost', ca: cert } });
   try {
+    assert.equal(await createSender(config, factory).verify(), true);
+    assert.equal(captured.length, 0);
+    await assert.rejects(createSender({ ...config, password: 'wrong' }, factory).verify(),
+      error => error.code === 'EAUTH');
+    assert.equal(captured.length, 0);
     for (const kind of ['confirmation', 'refusal']) {
       const result = await createSender(config, factory)(makeMessage(kind, config, kind));
       assert.deepEqual(result.accepted, [config.recipient]);
