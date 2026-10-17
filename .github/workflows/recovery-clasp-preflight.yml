@@ -1,0 +1,32 @@
+name: Clasp authentication preflight
+on:
+  push:
+    branches:
+      - work/recovery-clasp-20261017
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check existing clasp credential availability without revealing values
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          node <<'NODE'
+          const value = process.env.CLASPRC_JSON || '';
+          const result = { standardClaspCredentialConfigured: Boolean(value) };
+          if (value) {
+            try {
+              const credential = JSON.parse(value);
+              result.credentialJsonValid = Boolean(credential && typeof credential === 'object');
+            } catch {
+              result.credentialJsonValid = false;
+            }
+          }
+          console.log(JSON.stringify(result));
+          NODE
