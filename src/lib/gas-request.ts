@@ -26,6 +26,22 @@ function isTransportError(error: unknown) {
     ['TimeoutError', 'AbortError', 'TypeError'].includes(error.name);
 }
 
+function logReadFailure(action: string, attempt: number, error: unknown, elapsedMs: number) {
+  const value = error as { name?: unknown; phase?: unknown; host?: unknown; code?: unknown } | null;
+  const allowedNames = ['TypeError', 'TimeoutError', 'AbortError'];
+  const allowedPhases = ['dns', 'connect', 'tls', 'headers', 'body'];
+  const allowedHosts = ['script.google.com', 'script.googleusercontent.com'];
+  const allowedCodes = ['GAS_DEADLINE', 'GAS_TRANSPORT', 'ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'EAI_AGAIN', 'ECONNREFUSED', 'CERT_HAS_EXPIRED', 'ERR_TLS_CERT_ALTNAME_INVALID'];
+  // Never log the original error message, request URL, redirect key, or response body.
+  console.warn('GAS_READ_FAILURE', JSON.stringify({
+    action, attempt, elapsedMs,
+    name: allowedNames.includes(String(value?.name)) ? value?.name : 'Error',
+    phase: allowedPhases.includes(String(value?.phase)) ? value?.phase : 'unknown',
+    host: allowedHosts.includes(String(value?.host)) ? value?.host : 'unknown',
+    code: allowedCodes.includes(String(value?.code)) ? value?.code : 'unknown',
+  }));
+}
+
 export async function requestGasRead(
   url: string,
   context: GasRequestContext = createGasRequestContext(),
@@ -39,9 +55,11 @@ export async function requestGasRead(
   for (let attempt = 0; attempt < 2; attempt++) {
     const timeout = Math.min(ATTEMPT_MS, remaining(context));
     if (timeout <= 0) throw new Error('GAS request budget exhausted');
+    const started = context.now();
     try {
       return await fetcher(url, { cache: 'no-store', signal: AbortSignal.timeout(timeout) });
     } catch (error) {
+      logReadFailure(target.searchParams.get('action')!, attempt + 1, error, context.now() - started);
       if (attempt !== 0 || !isTransportError(error)) throw error;
     }
   }

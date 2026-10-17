@@ -6,16 +6,27 @@ const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 /** @param {URL} target @param {AbortSignal} signal */
 function requestOnce(target, signal) {
   return new Promise((resolve, reject) => {
+    let phase = 'dns';
+    const fail = error => {
+      const knownCodes = new Set(['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'EAI_AGAIN', 'ECONNREFUSED', 'CERT_HAS_EXPIRED', 'ERR_TLS_CERT_ALTNAME_INVALID']);
+      const failure = new TypeError(signal.aborted ? 'GAS read deadline exceeded' : 'GAS read transport failed');
+      Object.assign(failure, {
+        phase, host: target.hostname,
+        code: signal.aborted ? 'GAS_DEADLINE' : (knownCodes.has(error?.code) ? error.code : 'GAS_TRANSPORT'),
+      });
+      reject(failure);
+    };
     // Fresh IPv4 connections avoid reusing sockets across suspended function invocations.
     // Certificate and hostname verification remain enabled.
     const req = request(target, {
       method: 'GET', agent: false, family: 4, signal,
       headers: { Accept: 'application/json' },
     }, response => {
+      phase = 'body';
       const chunks = [];
       response.on('data', chunk => chunks.push(chunk));
-      response.on('error', reject);
-      response.on('aborted', () => reject(new TypeError('GAS read response interrupted')));
+      response.on('error', fail);
+      response.on('aborted', () => fail(new TypeError('GAS read response interrupted')));
       response.on('end', () => resolve({
         status: response.statusCode || 502,
         location: response.headers.location,
@@ -23,10 +34,12 @@ function requestOnce(target, signal) {
         body: Buffer.concat(chunks),
       }));
     });
-    req.on('error', error => {
-      if (signal.aborted) reject(signal.reason);
-      else reject(new TypeError('GAS read connection failed', { cause: error }));
+    req.on('socket', socket => {
+      socket.once('lookup', () => { phase = 'connect'; });
+      socket.once('connect', () => { phase = 'tls'; });
+      socket.once('secureConnect', () => { phase = 'headers'; });
     });
+    req.on('error', fail);
     req.end();
   });
 }
