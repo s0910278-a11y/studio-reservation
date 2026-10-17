@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - work/recovery-reservations-20261017
+      - work/recovery-native-read-20261017
 permissions:
   contents: read
 jobs:
@@ -19,3 +20,14 @@ jobs:
       # Match the existing lockfile's legacy peer dependency resolution.
       - run: npm ci --legacy-peer-deps
       - run: npm run build
+      - name: Read-only GAS transport smoke check
+        run: |
+          node --input-type=module <<'NODE'
+          import { fetchGasHttpsRead } from './src/lib/gas-native-read.mjs';
+          const url='https://script.google.com/macros/s/AKfycbxOE4x6w2NNbbrXJ_NSqf2CaTT5LaWvKflPzQnB-jkOuh9mg2IwA9nPcky6fPqcM3Tz4w/exec?action=getEquipment';
+          const started=Date.now();
+          const res=await fetchGasHttpsRead(url,AbortSignal.timeout(15000));
+          const result=await res.json();
+          if(!res.ok || !result.success || !Array.isArray(result.data)) throw new Error('GAS read smoke check failed');
+          console.log(JSON.stringify({status:res.status,items:result.data.length,elapsedMs:Date.now()-started}));
+          NODE
