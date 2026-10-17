@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getBookingsFromSheet, createBookingInSheet, getUsersFromSheet, createUserInSheet } from '../../../lib/sheets';
 import crypto from 'crypto';
+import { createGasRequestContext } from '../../../lib/gas-request';
 import { isActiveBookingStatus, normalizeBookingStatus } from '../../../lib/booking-status';
 
 export const dynamic = 'force-dynamic';
@@ -43,6 +44,7 @@ export async function GET(request: Request) {
 // POST: Process a new booking with spreadsheet
 export async function POST(request: Request) {
   try {
+    const sheetRequestContext = createGasRequestContext();
     const data = await request.json();
     let { name, phone, email, memberNo, studio, date, startTime, peopleCount, durationHours = 1 } = data;
     let isBanCandidate = false;
@@ -73,7 +75,7 @@ export async function POST(request: Request) {
     if (memberNo && memberNo !== 'ADMIN') {
       const targetNo = normalizeMemberNo(memberNo);
       // Existing Member Flow
-      const users = await getUsersFromSheet();
+      const users = await getUsersFromSheet(sheetRequestContext);
       const existingUser = users.find((u: any) => normalizeMemberNo(getField(u, '会員ナンバー')) === targetNo);
       
       if (!existingUser) {
@@ -114,7 +116,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'お客様情報が不足しています。すべて入力してください。' }, { status: 400 });
       }
 
-      const users = await getUsersFromSheet();
+      const users = await getUsersFromSheet(sheetRequestContext);
       
       const normName = (name || "").replace(/\s+/g, '');
       const normPhone = (phone || "").replace(/[^\d]/g, '');
@@ -170,7 +172,7 @@ export async function POST(request: Request) {
            name,
            phone,
            email
-        });
+        }, sheetRequestContext);
         console.log(`User created successfully: ${finalMemberNo} at row ${userCreateRes.row || 'unknown'}`);
       }
     } else if (memberNo === 'ADMIN') {
@@ -210,7 +212,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '営業時間は11:00からです。' }, { status: 400 });
     }
 
-    const bookings = await getBookingsFromSheet();
+    const bookings = await getBookingsFromSheet(sheetRequestContext);
     const conflict = bookings.find((b: any) => {
       // 日付とスタジオが一致するか？
       const bDate = (b['日付'] || "").substring(0, 10);
@@ -274,7 +276,7 @@ export async function POST(request: Request) {
       }, { status: 201 });
     }
 
-    await createBookingInSheet(bookingPayload);
+    await createBookingInSheet(bookingPayload, sheetRequestContext);
 
     const storeEmail = 'hoowada-gakki@zero-emission.co.jp';
     const emailBody = `

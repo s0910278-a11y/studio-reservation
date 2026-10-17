@@ -1,3 +1,5 @@
+import { requestGasRead, requestGasWrite, type GasRequestContext } from './gas-request';
+
 /**
  * Google Apps Script (GAS) Web API を経由して
  * スプレッドシートのデータを読み書きするデータアクセスモジュール。
@@ -15,12 +17,9 @@ const getGasUrl = () => {
 };
 
 // 予約一覧の取得
-export const getBookingsFromSheet = async () => {
+export const getBookingsFromSheet = async (context?: GasRequestContext) => {
   const url = getGasUrl();
-  const res = await fetch(`${url}?action=getBookings`, { 
-    next: { revalidate: 0 },
-    signal: AbortSignal.timeout(15000) 
-  });
+  const res = await requestGasRead(`${url}?action=getBookings`, context);
   if (!res.ok) throw new Error('Failed to fetch bookings from GAS');
   
   const json = await res.json();
@@ -30,12 +29,9 @@ export const getBookingsFromSheet = async () => {
 };
 
 // 顧客リストの取得
-export const getUsersFromSheet = async () => {
+export const getUsersFromSheet = async (context?: GasRequestContext) => {
   const url = getGasUrl();
-  const res = await fetch(`${url}?action=getUsers`, { 
-    next: { revalidate: 0 },
-    signal: AbortSignal.timeout(15000)
-  });
+  const res = await requestGasRead(`${url}?action=getUsers`, context);
   if (!res.ok) throw new Error('Failed to fetch users from GAS');
   
   const json = await res.json();
@@ -45,14 +41,9 @@ export const getUsersFromSheet = async () => {
 };
 
 // 新規予約を登録
-export const createBookingInSheet = async (bookingData: any) => {
+export const createBookingInSheet = async (bookingData: any, context?: GasRequestContext) => {
   const url = getGasUrl();
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' }, // GAS expects plain text payload sometimes without CORS issues
-    body: JSON.stringify({ action: 'createBooking', data: bookingData }),
-    signal: AbortSignal.timeout(15000)
-  });
+  const res = await requestGasWrite(url, { action: 'createBooking', data: bookingData }, context);
   
   if (!res.ok) throw new Error('Failed to post booking to GAS');
   
@@ -63,14 +54,9 @@ export const createBookingInSheet = async (bookingData: any) => {
 };
 
 // 新規顧客を登録
-export const createUserInSheet = async (userData: any) => {
+export const createUserInSheet = async (userData: any, context?: GasRequestContext) => {
   const url = getGasUrl();
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ action: 'createUser', data: userData }),
-    signal: AbortSignal.timeout(15000)
-  });
+  const res = await requestGasWrite(url, { action: 'createUser', data: userData }, context);
   
   if (!res.ok) throw new Error('Failed to post user to GAS');
   
@@ -81,12 +67,9 @@ export const createUserInSheet = async (userData: any) => {
 };
 
 // 機材リストの取得
-export const getEquipmentFromSheet = async () => {
+export const getEquipmentFromSheet = async (context?: GasRequestContext) => {
   const url = getGasUrl();
-  const res = await fetch(`${url}?action=getEquipment`, { 
-    next: { revalidate: 0 },
-    signal: AbortSignal.timeout(15000)
-  });
+  const res = await requestGasRead(`${url}?action=getEquipment`, context);
   if (!res.ok) throw new Error('Failed to fetch equipment from GAS');
   
   const json = await res.json();

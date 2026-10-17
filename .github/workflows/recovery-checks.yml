@@ -15,7 +15,7 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - run: node --experimental-strip-types --test tests/recovery-status.test.mjs
+      - run: node --experimental-strip-types --test tests/recovery-*.test.mjs
       # Match the existing lockfile's legacy peer dependency resolution.
       - run: npm ci --legacy-peer-deps
       - run: npm run build
