@@ -1,3 +1,10 @@
+import { fetchGasHttpsRead } from './gas-native-read.mjs';
+
+const readFetcher: typeof fetch = async (input, init) => {
+  if (typeof input !== 'string' || !init?.signal) throw new Error('GAS read requires a URL and deadline');
+  return fetchGasHttpsRead(input, init.signal);
+};
+
 // Keep a request below the platform's execution limit.
 // Only fixed, read-only GAS actions may be retried. Writes are attempted once.
 const ATTEMPT_MS = 15_000;
@@ -22,7 +29,7 @@ function isTransportError(error: unknown) {
 export async function requestGasRead(
   url: string,
   context: GasRequestContext = createGasRequestContext(),
-  fetcher: typeof fetch = fetch,
+  fetcher: typeof fetch = readFetcher,
 ): Promise<Response> {
   const target = new URL(url);
   if (target.protocol !== 'https:' || target.hostname !== 'script.google.com' ||
