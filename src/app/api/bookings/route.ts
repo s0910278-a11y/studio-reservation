@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getBookingsFromSheet, createBookingInSheet, getUsersFromSheet, createUserInSheet } from '../../../lib/sheets';
 import crypto from 'crypto';
+import { createGasRequestContext } from '../../../lib/gas-request';
+import { isActiveBookingStatus, normalizeBookingStatus } from '../../../lib/booking-status';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +14,7 @@ export async function GET(request: Request) {
 
     const sheetData = await getBookingsFromSheet();
     const bookings = sheetData
-      .filter((b: any) => b['ステータス'] === 'ACTIVE' || (isAdmin && b['ステータス'] === 'CANCELED'))
+      .filter((b: any) => isActiveBookingStatus(b['ステータス']) || (isAdmin && b['ステータス'] === 'CANCELED'))
       .map((b: any) => {
         let isoDate = "";
         try {
@@ -26,7 +28,7 @@ export async function GET(request: Request) {
           date: isoDate,
           startTime: b['開始時間'],
           endTime: b['終了時間'],
-          status: b['ステータス']
+          status: normalizeBookingStatus(b['ステータス'])
         };
         if (isAdmin) {
           return { ...base, name: b['お名前'], memberNo: b['会員ナンバー'], peopleCount: b['利用人数'] };
@@ -42,6 +44,7 @@ export async function GET(request: Request) {
 // POST: Process a new booking with spreadsheet
 export async function POST(request: Request) {
   try {
+    const sheetRequestContext = createGasRequestContext();
     const data = await request.json();
     let { name, phone, email, memberNo, studio, date, startTime, peopleCount, durationHours = 1 } = data;
     let isBanCandidate = false;
@@ -72,7 +75,7 @@ export async function POST(request: Request) {
     if (memberNo && memberNo !== 'ADMIN') {
       const targetNo = normalizeMemberNo(memberNo);
       // Existing Member Flow
-      const users = await getUsersFromSheet();
+      const users = await getUsersFromSheet(sheetRequestContext);
       const existingUser = users.find((u: any) => normalizeMemberNo(getField(u, '会員ナンバー')) === targetNo);
       
       if (!existingUser) {
@@ -113,7 +116,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'お客様情報が不足しています。すべて入力してください。' }, { status: 400 });
       }
 
-      const users = await getUsersFromSheet();
+      const users = await getUsersFromSheet(sheetRequestContext);
       
       const normName = (name || "").replace(/\s+/g, '');
       const normPhone = (phone || "").replace(/[^\d]/g, '');
@@ -169,7 +172,7 @@ export async function POST(request: Request) {
            name,
            phone,
            email
-        });
+        }, sheetRequestContext);
         console.log(`User created successfully: ${finalMemberNo} at row ${userCreateRes.row || 'unknown'}`);
       }
     } else if (memberNo === 'ADMIN') {
@@ -209,14 +212,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '営業時間は11:00からです。' }, { status: 400 });
     }
 
-    const bookings = await getBookingsFromSheet();
+    const bookings = await getBookingsFromSheet(sheetRequestContext);
     const conflict = bookings.find((b: any) => {
       // 日付とスタジオが一致するか？
       const bDate = (b['日付'] || "").substring(0, 10);
       const dDate = new Date(date).toISOString().substring(0, 10);
       const isSameDate = bDate === dDate;
       const isSameStudio = b['スタジオ'].includes(studio.includes('Studio A') ? 'Studio A' : 'Studio B');
-      if (!isSameDate || !isSameStudio || b['ステータス'] !== 'ACTIVE') return false;
+      if (!isSameDate || !isSameStudio || !isActiveBookingStatus(b['ステータス'])) return false;
 
       // 既存の予約の開始/終了を分に変換
       const [exStartH, exStartM] = (b['開始時間'] || '00:00').split(':').map(Number);
@@ -273,7 +276,7 @@ export async function POST(request: Request) {
       }, { status: 201 });
     }
 
-    await createBookingInSheet(bookingPayload);
+    await createBookingInSheet(bookingPayload, sheetRequestContext);
 
     const storeEmail = 'hoowada-gakki@zero-emission.co.jp';
     const emailBody = `
@@ -329,7 +332,7 @@ export async function PUT(request: Request) {
 
             const hasOverlap = bookings.some((bk: any) => {
                if (bk['予約ID'] === bookingId) return false;
-               if (bk['ステータス'] !== 'ACTIVE') return false;
+               if (!isActiveBookingStatus(bk['ステータス'])) return false;
                if (!bk['スタジオ']?.includes(tStudio.includes('Studio A') ? 'Studio A' : 'Studio B')) return false;
                
                const bDate = new Date(bk['日付']).toISOString().substring(0, 10);

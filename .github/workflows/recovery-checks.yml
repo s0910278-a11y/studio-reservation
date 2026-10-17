@@ -1,0 +1,21 @@
+name: Reservation recovery checks
+on:
+  push:
+    branches:
+      - work/recovery-reservations-20261017
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: node --experimental-strip-types --test tests/recovery-*.test.mjs
+      # Match the existing lockfile's legacy peer dependency resolution.
+      - run: npm ci --legacy-peer-deps
+      - run: npm run build

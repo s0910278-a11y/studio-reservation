@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getBookingsFromSheet, getUsersFromSheet } from '../../../../lib/sheets';
+import { normalizeBookingStatus } from '../../../../lib/booking-status';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,7 @@ export async function GET() {
         date: isoDate,
         startTime: b['開始時間'],
         endTime: b['終了時間'],
-        status: b['ステータス'],
+        status: normalizeBookingStatus(b['ステータス']),
         name: b['お名前'],
         memberNo: b['会員ナンバー'],
         peopleCount: b['利用人数']
