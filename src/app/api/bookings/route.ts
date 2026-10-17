@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getBookingsFromSheet, createBookingInSheet, getUsersFromSheet, createUserInSheet } from '../../../lib/sheets';
 import crypto from 'crypto';
+import { isActiveBookingStatus, normalizeBookingStatus } from '../../../lib/booking-status';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,7 @@ export async function GET(request: Request) {
 
     const sheetData = await getBookingsFromSheet();
     const bookings = sheetData
-      .filter((b: any) => b['ステータス'] === 'ACTIVE' || (isAdmin && b['ステータス'] === 'CANCELED'))
+      .filter((b: any) => isActiveBookingStatus(b['ステータス']) || (isAdmin && b['ステータス'] === 'CANCELED'))
       .map((b: any) => {
         let isoDate = "";
         try {
@@ -26,7 +27,7 @@ export async function GET(request: Request) {
           date: isoDate,
           startTime: b['開始時間'],
           endTime: b['終了時間'],
-          status: b['ステータス']
+          status: normalizeBookingStatus(b['ステータス'])
         };
         if (isAdmin) {
           return { ...base, name: b['お名前'], memberNo: b['会員ナンバー'], peopleCount: b['利用人数'] };
@@ -216,7 +217,7 @@ export async function POST(request: Request) {
       const dDate = new Date(date).toISOString().substring(0, 10);
       const isSameDate = bDate === dDate;
       const isSameStudio = b['スタジオ'].includes(studio.includes('Studio A') ? 'Studio A' : 'Studio B');
-      if (!isSameDate || !isSameStudio || b['ステータス'] !== 'ACTIVE') return false;
+      if (!isSameDate || !isSameStudio || !isActiveBookingStatus(b['ステータス'])) return false;
 
       // 既存の予約の開始/終了を分に変換
       const [exStartH, exStartM] = (b['開始時間'] || '00:00').split(':').map(Number);
@@ -329,7 +330,7 @@ export async function PUT(request: Request) {
 
             const hasOverlap = bookings.some((bk: any) => {
                if (bk['予約ID'] === bookingId) return false;
-               if (bk['ステータス'] !== 'ACTIVE') return false;
+               if (!isActiveBookingStatus(bk['ステータス'])) return false;
                if (!bk['スタジオ']?.includes(tStudio.includes('Studio A') ? 'Studio A' : 'Studio B')) return false;
                
                const bDate = new Date(bk['日付']).toISOString().substring(0, 10);
