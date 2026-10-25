@@ -19,8 +19,10 @@ export async function POST(request: Request) {
     if (!response.ok) {
       throw new Error('Failed to process no-show');
     }
+    const result = await response.json();
+    if (result.error || result.success !== true) return NextResponse.json({ error: result.error || '来店なし処理に失敗しました。' }, { status: 400 });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json(result);
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

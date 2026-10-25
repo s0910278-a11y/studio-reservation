@@ -48,9 +48,9 @@ export const createBookingInSheet = async (bookingData: any, context?: GasReques
   if (!res.ok) throw new Error('Failed to post booking to GAS');
   
   const json = await res.json();
-  if (json.error) throw new Error(json.error);
+  if (json.error || json.success !== true) throw new Error(json.error || '予約登録の結果を確認できません。');
   
-  return json.success;
+  return json;
 };
 
 // 新規顧客を登録

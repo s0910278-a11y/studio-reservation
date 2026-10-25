@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { RESERVATION_TERMS_VERSION } from '../lib/reservation-policy';
 
 const TIME_SLOTS = [
   "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", 
@@ -30,6 +31,7 @@ export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [issuedMemberNo, setIssuedMemberNo] = useState('');
+  const [mailSent, setMailSent] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
   const [bookedSlots, setBookedSlots] = useState<{ studioId: string, date: string, startTime: string, endTime: string }[]>([]);
 
@@ -171,6 +173,8 @@ export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
         startTime: formData.startTime,
         durationHours: Number(formData.durationHours),
         peopleCount: Number(formData.peopleCount),
+        termsAgreed: true,
+        termsVersion: RESERVATION_TERMS_VERSION,
       };
 
       if (userType === 'member') {
@@ -195,6 +199,7 @@ export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
           return;
         }
         setIssuedMemberNo(data.memberNo || formData.memberNo);
+        setMailSent(data.emailSent !== false);
         setSuccess(true);
         if (onSuccess) onSuccess();
       } else {
@@ -206,7 +211,7 @@ export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
         }
       }
     } catch (err) {
-      setErrorMsg('ネットワークエラーが発生しました。');
+      setErrorMsg('通信が途切れたため、予約結果を確認できません。登録済みの場合があります。再予約せず、確認メールをご確認いただくか店舗へお問い合わせください。');
     } finally {
       setLoading(false);
     }
@@ -217,7 +222,7 @@ export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
       <div style={{ textAlign: 'center', padding: '30px', backgroundColor: '#fff', borderRadius: '12px', border: '2px solid var(--accent-blue)', marginTop: '20px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
         <h3 style={{ color: 'var(--accent-blue)', marginBottom: '20px', fontSize: '1.5rem', fontWeight: 'bold' }}>✔ 予約が確定しました</h3>
         <p style={{ color: 'var(--text-secondary)', marginBottom: '25px', lineHeight: '1.6' }}>
-          ご入力のメールアドレス宛に「ご予約完了メールおよびキャンセルURL」をお送りしました。
+          {mailSent ? '登録メールアドレス宛に「ご予約完了メールおよびキャンセルURL」をお送りしました。' : '予約枠は確保しましたが、予約完了メールを送信できませんでした。再予約せず、この画面と会員番号を保存して店舗へお問い合わせください。'}
         </p>
 
         <div style={{ backgroundColor: '#f0f7ff', padding: '20px', borderRadius: '8px', display: 'inline-block', textAlign: 'left', marginBottom: '30px', border: '1px solid var(--accent-blue)' }}>
@@ -406,8 +411,8 @@ export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
       {/* 注意文の追加 */}
       <div style={{ marginTop: '25px', padding: '12px', border: '2px solid #e53935', borderRadius: '8px', backgroundColor: 'rgba(229, 57, 53, 0.1)' }}>
         <p style={{ color: '#ff5252', fontWeight: 'bold', fontSize: '0.85rem', margin: 0, lineHeight: '1.6', textAlign: 'center' }}>
-          ⚠️ 重要：予約完了メールの受信をもって予約確定となります。<br/>
-          ご利用当日、受付にて予約完了メールの画面をスタッフへご提示ください。
+          予約完了画面が表示されたら、予約枠は確保されています。<br/>
+          メールが届かない場合は再予約せず、店舗へお問い合わせください。ご来店時は予約完了メールをご提示ください。
         </p>
       </div>
 
@@ -502,9 +507,12 @@ export default function BookingForm({ prefill, onSuccess }: BookingFormProps) {
 
                 <p style={{ fontWeight: 'bold', color: '#1a1a1a', marginTop: '20px', marginBottom: '10px' }}>■ ご利用のキャンセルについて</p>
                 <div style={{ marginLeft: '10px', marginBottom: '20px' }}>
-                  キャンセル料金は原則発生いたしませんが、当日の利用時間の10分を過ぎてもご来店されない場合は、自動的にキャンセルとさせていただきます。<br/>
-                  キャンセルを前提としての空予約は、ご遠慮願います。<br/>
-                  <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '5px' }}>※同じお客様からの空予約が続く場合は、ご利用をお断りさせていただく場合がございますので、ご了承ください。</p>
+                  キャンセル料金は原則発生いたしません。利用開始時刻までは、予約完了メールのリンクから確認画面を開き、同意のうえ「キャンセルを確定する」を押してください。リンクを開くだけではキャンセルされません。<br/>
+                  利用開始時刻を過ぎた場合は店舗へご連絡ください。開始から10分を過ぎてもご来店がない場合は、店舗スタッフが状況を確認して「来店なし」として処理します。時間の経過だけで予約枠が解除されることはありません。<br/>
+                  ご連絡のないキャンセルや、ご利用直前のキャンセルを繰り返す行為はお控えください。<br/>
+                  利用意思のない予約、他のお客様の利用を妨げる目的で予約枠を確保する行為、複数の枠を仮押さえして不要な枠を直前に取り消す行為はご遠慮ください。<br/>
+                  <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '5px' }}>これらの行為が繰り返される場合や、他のお客様の利用に支障が生じる場合は、店舗がご利用状況・ご事情を確認のうえ、今後のご予約・ご利用をお断りする場合がございます。やむを得ない事情がある場合は店舗へご相談ください。</p>
+                  <p style={{ fontSize: '0.8rem', color: '#666' }}>規約改定日：2026年10月25日</p>
                 </div>
 
                 <p style={{ fontWeight: 'bold', color: '#1a1a1a', marginTop: '20px', marginBottom: '10px' }}>■ スタジオ機材について</p>

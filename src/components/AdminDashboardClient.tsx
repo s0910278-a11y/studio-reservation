@@ -27,7 +27,7 @@ export default function AdminDashboardClient() {
         const stopKey = Object.keys(u).find(k => k.includes('利用停止'));
         const isStopped = !!(stopKey && String(u[stopKey]).toLowerCase() === 'true');
         const cancelCount = Number(u['キャンセル回数']) || 0;
-        return isStopped || cancelCount >= 3;
+        return isStopped || cancelCount >= 3 || (u.reservationReview?.reasons?.length || 0) > 0;
       });
       setUsers(filteredUsers);
       setError(null);
@@ -241,6 +241,7 @@ export default function AdminDashboardClient() {
 
         <div className="panel" style={{ flex: '1', minWidth: '300px' }}>
           <h3>顧客管理 (BAN操作)</h3>
+          <p style={{ fontSize: '0.8rem', color: '#666', marginTop: '8px' }}>候補表示だけでは利用停止になりません。直近90日の直前取消（開始24時間以内に3件以上）や、同時刻の複数スタジオ確保後の直前取消（2日以上）を目安に、履歴とご事情を確認してください。日時の記録がない過去の取消は直前取消として推定しません。</p>
           <ul style={{ marginTop: '20px', listStyle: 'none' }}>
             {users.length === 0 ? <li style={{ color: '#999' }}>顧客情報なし</li> : users.map((u: any, i: number) => {
               const refusedKey = Object.keys(u).find(k => k.includes('拒否') || k.includes('拒絶'));
@@ -262,6 +263,17 @@ export default function AdminDashboardClient() {
                       キャンセル回数: <span style={{ color: '#e53935', fontWeight: 'bold' }}>{u['キャンセル回数']}</span>
                       {u['ご利用回数'] !== undefined && <span style={{ marginLeft: '10px', color: '#388e3c' }}>利用回数: {u['ご利用回数'] || 0}</span>}
                     </div>
+                    {u.reservationReview?.reasons?.map((reason: string) => (
+                      <p key={reason} style={{ margin: '5px 0 0', fontSize: '0.8rem', color: '#9a5500' }}>{reason}</p>
+                    ))}
+                    {u.reservationReview?.evidence?.length > 0 && (
+                      <details style={{ fontSize: '0.8rem', color: '#666', marginTop: '8px' }}>
+                        <summary style={{ cursor: 'pointer' }}>直前キャンセルの履歴（最新5件）</summary>
+                        <ul style={{ paddingLeft: '18px', marginTop: '8px' }}>
+                          {u.reservationReview.evidence.map((entry: any) => <li key={entry.bookingId}>{entry.date} {entry.time}／{entry.studio}<br />取消：{entry.canceledAt}／予約ID：{entry.bookingId}</li>)}
+                        </ul>
+                      </details>
+                    )}
                   </div>
                   <AdminUserBanToggle 
                     memberNo={u['会員ナンバー']} 

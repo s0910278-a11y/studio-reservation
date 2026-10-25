@@ -3,6 +3,7 @@ import { getBookingsFromSheet, createBookingInSheet, getUsersFromSheet, createUs
 import crypto from 'crypto';
 import { createGasRequestContext } from '../../../lib/gas-request';
 import { isActiveBookingStatus, normalizeBookingStatus } from '../../../lib/booking-status';
+import { RESERVATION_TERMS_VERSION } from '../../../lib/reservation-policy';
 
 export const dynamic = 'force-dynamic';
 
@@ -127,15 +128,15 @@ export async function POST(request: Request) {
 
       for (const u of users) {
         let score = 0;
-        let pName = (getField(u, 'お名前') || "").replace(/\s+/g, '') === normName;
-        let pPhone = (getField(u, '電話番号') || "").replace(/[^\d]/g, '') === normPhone;
-        let pEmail = (getField(u, 'メールアドレス') || "").toLowerCase() === normEmail;
+        let pName = String(getField(u, 'お名前') || '').replace(/\s+/g, '') === normName;
+        let pPhone = String(getField(u, '電話番号') || '').replace(/[^\d]/g, '') === normPhone;
+        let pEmail = String(getField(u, 'メールアドレス') || '').toLowerCase() === normEmail;
         
-        if (pName) score += 2;
+        if (pName) score += 1;
         if (pPhone) score += 1;
         if (pEmail) score += 1;
 
-        if (score >= 2) {
+        if (score >= 2) { // 同姓同名だけで別のお客様の予約・停止情報へ紐づけない
           if (!matchedUser || score > matchScore) {
             matchedUser = u;
             matchScore = score;
@@ -250,6 +251,8 @@ export async function POST(request: Request) {
       totalPrice: Number(peopleCount) * 440 * Number(durationHours),
       status: bookingStatus,
       cancelToken: crypto.randomUUID(),
+      termsVersion: data.termsAgreed === true && data.termsVersion === RESERVATION_TERMS_VERSION ? RESERVATION_TERMS_VERSION : '',
+      termsAgreed: data.termsAgreed === true && data.termsVersion === RESERVATION_TERMS_VERSION,
       baseUrl: process.env.NEXT_PUBLIC_BASE_URL || 'https://zeroemission-reserve.netlify.app',
       gasUrl: "https://script.google.com/macros/s/AKfycbxOE4x6w2NNbbrXJ_NSqf2CaTT5LaWvKflPzQnB-jkOuh9mg2IwA9nPcky6fPqcM3Tz4w/exec"
     };
@@ -276,33 +279,14 @@ export async function POST(request: Request) {
       }, { status: 201 });
     }
 
-    await createBookingInSheet(bookingPayload, sheetRequestContext);
-
-    const storeEmail = 'hoowada-gakki@zero-emission.co.jp';
-    const emailBody = `
-件名: 【HARD OFF MUSIC STUDIO】ご予約ありがとうございます
-
-${name} 様
-この度はハードオフ八王子大和田店 楽器スタジオをご予約いただき、誠にありがとうございます。
-■ ご予約内容
-・スタジオ: ${bookingPayload.studio}
-・ご利用日: ${date}
-・お時間帯: ${startTime} ～ ${endTime}
-・ご利用人数: ${peopleCount}名様
-・ご予約者番号: ${finalMemberNo}
-
-=======================================
-▼ 画面保存のお願い
-こちらの予約完了メールの画面を保存またはスクリーンショット撮影し、ご来店時にスタッフへご提示ください。
-=======================================
-`;
-    console.log(`[FROM: ${storeEmail}] -> [TO: ${email}]\n${emailBody}`);
-
-    return NextResponse.json({ success: true, booking: bookingPayload, memberNo: finalMemberNo }, { status: 201 });
+    const result = await createBookingInSheet(bookingPayload, sheetRequestContext);
+    return NextResponse.json({ success: true, booking: bookingPayload, memberNo: finalMemberNo, emailSent: result.emailSent }, { status: 201 });
 
   } catch (error: any) {
     console.error(error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    const message = String(error?.message || '');
+    if (message.includes('既に予約')) return NextResponse.json({ error: '先に他のお客様の予約が確定しました。空き状況をご確認ください。' }, { status: 409 });
+    return NextResponse.json({ error: '予約結果を確認できません。登録済みの場合があるため、再予約せず、メールをご確認いただくか店舗へお問い合わせください。' }, { status: 500 });
   }
 }
 
@@ -358,6 +342,8 @@ export async function PUT(request: Request) {
           body: JSON.stringify({ action: 'updateBookingStatus', data: { bookingId, status } })
        });
        if (!response.ok) throw new Error('Failed to update status in GAS');
+       const result = await response.json();
+       if (result.error || result.success !== true) return NextResponse.json({ error: result.error || '変更に失敗しました。' }, { status: result.code === 'BOOKING_CONFLICT' ? 409 : 400 });
        return NextResponse.json({ success: true });
     }
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });

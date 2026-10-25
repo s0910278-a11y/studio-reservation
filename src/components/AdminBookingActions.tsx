@@ -33,7 +33,7 @@ export default function AdminBookingActions({ bookingId, currentStatus }: { book
   };
 
   const handleNoShow = async () => {
-    if (!window.confirm('「来店なし」として処理しますか？\n※これを実行すると予約はキャンセルされ、ユーザーは即時BAN対象になります。')) return;
+    if (!window.confirm('「来店なし」として処理しますか？\n開始10分後から実行できます。予約枠を解除し、キャンセル回数に3回分を加算します。お客様と店舗へ通知メールを送信します。利用停止はスタッフが別途判断します。')) return;
     setLoading(true);
     try {
       const res = await fetch('/api/users/noshow', {
@@ -42,10 +42,12 @@ export default function AdminBookingActions({ bookingId, currentStatus }: { book
         body: JSON.stringify({ bookingId })
       });
       if (res.ok) {
-        alert("ステータスを更新しました");
+        const result = await res.json();
+        alert(result.message || '来店なしとして処理しました。');
         window.location.reload();
       } else {
-        alert('処理に失敗しました。');
+        const error = await res.json().catch(() => ({}));
+        alert(error.error || '処理に失敗しました。');
       }
     } catch {
       alert('ネットワークエラー');

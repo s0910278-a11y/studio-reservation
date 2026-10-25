@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getBookingsFromSheet, getUsersFromSheet } from '../../../../lib/sheets';
 import { normalizeBookingStatus } from '../../../../lib/booking-status';
+import { reviewReservationBehavior } from '../../../../lib/reservation-policy';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,13 +29,17 @@ export async function GET() {
         status: normalizeBookingStatus(b['ステータス']),
         name: b['お名前'],
         memberNo: b['会員ナンバー'],
-        peopleCount: b['利用人数']
+        peopleCount: b['利用人数'],
+        registeredAt: b['登録日時'] || '',
+        canceledAt: b['キャンセル日時'] || '',
+        cancellationSource: b['キャンセル操作元'] || '',
+        cancellationMailStatus: b['キャンセル通知状態'] || ''
       };
     });
 
     return NextResponse.json({
       bookings: mappedBookings,
-      users: users || []
+      users: (users || []).map((user: any) => ({ ...user, reservationReview: reviewReservationBehavior(user['会員ナンバー'], mappedBookings) }))
     });
   } catch (error: any) {
     console.error('Admin Data API Error:', error);

@@ -16,7 +16,7 @@ function CancelContent() {
     const gasUrl = "https://script.google.com/macros/s/AKfycbxOE4x6w2NNbbrXJ_NSqf2CaTT5LaWvKflPzQnB-jkOuh9mg2IwA9nPcky6fPqcM3Tz4w/exec";
     if (gasUrl) {
       setStatus('redirecting');
-      window.location.href = `${gasUrl}?token=${token}`;
+      window.location.replace(`${gasUrl}?token=${encodeURIComponent(token)}`);
       return;
     }
 
@@ -55,8 +55,8 @@ function CancelContent() {
             <div style={{ fontSize: '3rem', marginBottom: '20px' }}>⚠️</div>
             <h2 style={{ color: 'var(--text-primary)', marginBottom: '15px', fontSize: '1.5rem' }}>予約のキャンセル確認</h2>
             <p style={{ color: 'var(--text-secondary)', lineHeight: '1.8', marginBottom: '30px' }}>
-              予約をキャンセルします。よろしいですか？<br/>
-              <span style={{ fontSize: '0.85rem', color: '#e53935' }}>※この操作は取り消せません。</span>
+              次の画面で予約内容をご確認ください。<br/>
+              <span style={{ fontSize: '0.85rem' }}>確認画面を開くだけではキャンセルされません。</span>
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <button 
@@ -64,7 +64,7 @@ function CancelContent() {
                 className="btn-primary"
                 style={{ backgroundColor: '#e53935' }}
               >
-                予約をキャンセルする
+                予約内容の確認へ進む
               </button>
               <a href="/" className="btn-outline">
                 戻る
@@ -77,9 +77,9 @@ function CancelContent() {
           <>
             <div style={{ fontSize: '2rem', marginBottom: '20px' }}>⏳</div>
             <h2 style={{ color: 'var(--text-primary)', marginBottom: '10px' }}>
-              {status === 'redirecting' ? 'リダイレクト中...' : 'キャンセル処理中...'}
+              {status === 'redirecting' ? 'キャンセル確認画面を開いています' : '確認画面を読み込み中...'}
             </h2>
-            <p style={{ color: 'var(--text-secondary)' }}>しばらくお待ちください。</p>
+            <p style={{ color: 'var(--text-secondary)' }}>この操作だけではキャンセルされません。次の画面で予約内容をご確認ください。</p>
           </>
         )}
 
